@@ -17,7 +17,7 @@ Note: The script *does not* verify the copied files.
  2. Create a directory `copy_files/` to your Desktop (i.e. `/home/user/Desktop/copy_files/` and place all
     directories and files to this directory)
  3. Insert USB media to the workstation.
- 4. Execute `copy_files.sh`
+ 4. Execute `copy_files.sh` as root
  5. If the script gets an error (created partition is not a block device) the failing device(a) is reported
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
