@@ -22,6 +22,7 @@ for USBDISK in /sys/block/sd*; do
 		fi
 	fi
 done
+USBS_COUNT=`echo "${USBS}" | wc -w`
 }
 
 DD_IMAGE=$1
@@ -50,16 +51,23 @@ DD_IMAGE_MD5=$(cut --delimiter=' ' -f 1 <${DD_IMAGE}.md5)
 TMPDIR=$(mktemp -d)
 
 enum_usbs
-echo "USBs: ${USBS}"
+echo "USBs: ${USBS} (${USBS_COUNT})"
+
+if [ "${USBS_COUNT}" == "0" ]; then
+	echo "$0: No writeable USB sticks found"
+	exit 1
+fi
 
 # Write dd image to all USB disks
 
 echo -n "Starting write: "
+UCOUNT=0
 for THIS_USB in ${USBS}; do
 	echo -n "${THIS_USB} "
 	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_IMAGE_SIZE} >/dev/null 2>/dev/null ) &
+	let "UCOUNT = UCOUNT + 1"
 done
-echo ""
+echo "(${UCOUNT})"
 
 echo -n "Waiting for dd write processes to terminate..."
 wait
@@ -74,13 +82,15 @@ echo "OK"
 
 # Verify drives
 
-echo -n "Starting to verify: ${THIS_USB}"
+echo -n "Starting to verify: "
+UCOUNT=0
 for THIS_USB in ${USBS}; do
 	echo -n "${THIS_USB} "
 	BASE=`basename ${THIS_USB}`
 	( dd if=${THIS_USB} count=1 bs=${DD_IMAGE_SIZE} 2>/dev/null | md5sum >${TMPDIR}/${BASE} ) &
+	let "UCOUNT = UCOUNT + 1"
 done
-echo ""
+echo "(${UCOUNT})"
 
 echo -n "Waiting for verify processes to terminate..."
 wait
@@ -101,7 +111,7 @@ while [ ${#USBS} -gt 1 ]; do
 		fi
 	done
 
-	echo "------------"
+	echo "------------ (${USBS_COUNT})"
 done
 
 rm -fR ${TMPDIR}
