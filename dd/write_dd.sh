@@ -1,6 +1,14 @@
 #!/bin/bash
 
+LOG_FILE=~/write_dd.log
 SLEEP_BETWEEN=5
+DD_BLOCK_SIZE=1M
+
+# Make errors to these devices to test error-checking
+# Double-check that you're not using thes device paths as HD etc!
+#TEST_DEVICES="/dev/sdd"
+# Don't make any errors
+TEST_DEVICES=
 
 # Search all USB disks
 
@@ -15,7 +23,7 @@ for USBDISK in /sys/block/sd*; do
 		DEV_USBDISK=`basename ${USBDISK}`
 		DEV_USBDISK="/dev/${DEV_USBDISK}"
 		if grep -qs "${DEV_USBDISK}" /proc/mounts; then
-			# echo "Skipping mounted disk ${DEV_USBDISK}"
+			write_message "[Skipping mounted USB disk ${DEV_USBDISK}] "
 			NOP=1
 		else
 			USBS="${USBS} ${DEV_USBDISK}"
@@ -23,6 +31,17 @@ for USBDISK in /sys/block/sd*; do
 	fi
 done
 USBS_COUNT=`echo "${USBS}" | wc -w`
+}
+
+function write_message {
+	NOW=`date`
+	echo "${NOW} $1" >>${LOG_FILE}
+	echo -n "$1"
+}
+
+function write_message_nl {
+	write_message "$1"
+	echo ""
 }
 
 DD_IMAGE=$1
@@ -51,7 +70,8 @@ DD_IMAGE_MD5=$(cut --delimiter=' ' -f 1 <${DD_IMAGE}.md5)
 TMPDIR=$(mktemp -d)
 
 enum_usbs
-echo "USBs: ${USBS} (${USBS_COUNT})"
+
+write_message_nl "USBs: ${USBS} (${USBS_COUNT})"
 
 if [ "${USBS_COUNT}" == "0" ]; then
 	echo "$0: No writeable USB sticks found"
@@ -60,58 +80,89 @@ fi
 
 # Write dd image to all USB disks
 
-echo -n "Starting write: "
+write_message "Starting write: "
 UCOUNT=0
 for THIS_USB in ${USBS}; do
-	echo -n "${THIS_USB} "
-	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_IMAGE_SIZE} >/dev/null 2>/dev/null ) &
+	write_message "${THIS_USB} "
+	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} >/dev/null 2>/dev/null ) &
 	let "UCOUNT = UCOUNT + 1"
 done
-echo "(${UCOUNT})"
+write_message_nl "(${UCOUNT})"
 
-echo -n "Waiting for dd write processes to terminate..."
+write_message "Waiting for dd write processes to terminate..."
 wait
 sleep ${SLEEP_BETWEEN}
-echo "OK"
+write_message_nl "OK"
 
 # Drop memory cache
-echo -n "Clear memory cache..."
+write_message "Clear memory cache..."
 sync
 echo 3 > /proc/sys/vm/drop_caches
-echo "OK"
+write_message_nl "OK"
+
+# Make errors
+
+for THIS_USB in ${TEST_DEVICES}; do
+	write_message "Creating errors to ${THIS_USB}..."
+	dd if=/dev/random of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null
+	write_message_nl "OK"
+done
 
 # Verify drives
 
-echo -n "Starting to verify: "
+write_message "Starting to verify: "
 UCOUNT=0
 for THIS_USB in ${USBS}; do
-	echo -n "${THIS_USB} "
+	write_message "${THIS_USB} "
 	BASE=`basename ${THIS_USB}`
-	( dd if=${THIS_USB} count=1 bs=${DD_IMAGE_SIZE} 2>/dev/null | md5sum >${TMPDIR}/${BASE} ) &
+	( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
 	let "UCOUNT = UCOUNT + 1"
 done
-echo "(${UCOUNT})"
+write_message_nl "(${UCOUNT})"
 
-echo -n "Waiting for verify processes to terminate..."
+write_message "Waiting for verify processes to terminate..."
 wait
 sleep ${SLEEP_BETWEEN}
-echo "OK"
+write_message_nl "OK"
 
 # Look for probably defected drives
+
+write_message "Waiting the operator to remove the memory sticks..."
+
+let "USBS_COUNT_LAST = -1"
+let "ERROR_COUNT_LAST = -1"
 
 while [ ${#USBS} -gt 1 ]; do
 
 	enum_usbs
 	
+	let "ERROR_COUNT = 0"
 	for THIS_USB in ${USBS}; do
 		BASE=`basename ${THIS_USB}`
 		THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
 		if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
 			echo "Verify failed: ${THIS_USB}"
+			let "ERROR_COUNT = ERROR_COUNT + 1"
 		fi
 	done
+	
+	if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
+		# One or more USB sticks with error was removed
+		aplay error.wav >/dev/null 2>/dev/null &
+	else
+		if [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
+			# One or more USB sticks was removed
+			aplay ok.wav >/dev/null 2>/dev/null &
+		fi
+	fi
 
-	echo "------------ (${USBS_COUNT})"
+	let "USBS_COUNT_LAST = USBS_COUNT"
+	let "ERROR_COUNT_LAST = ERROR_COUNT"
+
+	echo "------------ (USBS: ${USBS_COUNT}, Errors. ${ERROR_COUNT})"
 done
 
 rm -fR ${TMPDIR}
+
+write_message_nl "Normal termination"
+
