@@ -4,6 +4,15 @@ LOG_FILE=~/write_dd.log
 SLEEP_BETWEEN=5
 DD_BLOCK_SIZE=1M
 
+# Get script dir (http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in)
+SOURCE="${BASH_SOURCE[0]}"
+while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+  DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIR/$SOURCE" # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+done
+SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
 # Make errors to these devices to test error-checking
 # Double-check that you're not using thes device paths as HD etc!
 #TEST_DEVICES="/dev/sdd"
@@ -165,11 +174,11 @@ while [ ${#USBS} -gt 1 ]; do
 	
 	if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
 		# One or more USB sticks with error was removed
-		aplay error.wav >/dev/null 2>/dev/null &
+		aplay ${SCRIPT_DIR}/error.wav >/dev/null 2>/dev/null &
 	else
 		if [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
 			# One or more USB sticks was removed
-			aplay ok.wav >/dev/null 2>/dev/null &
+			aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
 		fi
 	fi
 
