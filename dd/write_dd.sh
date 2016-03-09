@@ -139,18 +139,27 @@ write_message "Waiting the operator to remove the memory sticks..."
 
 let "USBS_COUNT_LAST = -1"
 let "ERROR_COUNT_LAST = -1"
+let "MISSING_COUNT_LAST = -1"
 
 while [ ${#USBS} -gt 1 ]; do
 
 	enum_usbs
 	
 	let "ERROR_COUNT = 0"
+	let "MISSING_COUNT = 0"
+	
 	for THIS_USB in ${USBS}; do
 		BASE=`basename ${THIS_USB}`
-		THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
-		if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
-			echo "Verify failed: ${THIS_USB}"
-			let "ERROR_COUNT = ERROR_COUNT + 1"
+		if [ -f "${TMPDIR}/${BASE}" ]; then
+			# MD5 file exists - this is a known device
+			THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
+			if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
+				echo "Verify failed: ${THIS_USB}"
+				let "ERROR_COUNT = ERROR_COUNT + 1"
+			fi
+		else
+			# MD5 file does not exist - this device has not been processed
+			let "MISSING_COUNT = MISSING_COUNT + 1"
 		fi
 	done
 	
@@ -166,8 +175,9 @@ while [ ${#USBS} -gt 1 ]; do
 
 	let "USBS_COUNT_LAST = USBS_COUNT"
 	let "ERROR_COUNT_LAST = ERROR_COUNT"
+	let "MISSING_COUNT_LAST = MISSING_COUNT"
 
-	echo "------------ (USBS: ${USBS_COUNT}, Errors. ${ERROR_COUNT})"
+	echo "------------ (USBS: ${USBS_COUNT}, Errors: ${ERROR_COUNT}, Not processed: ${MISSING_COUNT})"
 done
 
 rm -fR ${TMPDIR}
