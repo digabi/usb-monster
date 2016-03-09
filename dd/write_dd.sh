@@ -13,24 +13,23 @@ TEST_DEVICES=
 # Search all USB disks
 
 function enum_usbs () {
+	USBS=""
+	for USBDISK in /sys/block/sd*; do
+		USBDISK_READLINK=`readlink -f ${USBDISK}/device`
 
-USBS=""
-for USBDISK in /sys/block/sd*; do
-	USBDISK_READLINK=`readlink -f ${USBDISK}/device`
-
-	if [[ $USBDISK_READLINK == *"usb"* ]]; then
-		# This is USB drive
-		DEV_USBDISK=`basename ${USBDISK}`
-		DEV_USBDISK="/dev/${DEV_USBDISK}"
-		if grep -qs "${DEV_USBDISK}" /proc/mounts; then
-			write_message "[Skipping mounted USB disk ${DEV_USBDISK}] "
-			NOP=1
-		else
-			USBS="${USBS} ${DEV_USBDISK}"
+		if [[ $USBDISK_READLINK == *"usb"* ]]; then
+			# This is USB drive
+			DEV_USBDISK=`basename ${USBDISK}`
+			DEV_USBDISK="/dev/${DEV_USBDISK}"
+			if grep -qs "${DEV_USBDISK}" /proc/mounts; then
+				write_message "[Skipping mounted USB disk ${DEV_USBDISK}] "
+				NOP=1
+			else
+				USBS="${USBS} ${DEV_USBDISK}"
+			fi
 		fi
-	fi
-done
-USBS_COUNT=`echo "${USBS}" | wc -w`
+	done
+	USBS_COUNT=`echo "${USBS}" | wc -w`
 }
 
 function write_message {
