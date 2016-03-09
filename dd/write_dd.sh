@@ -175,11 +175,12 @@ while [ ${#USBS} -gt 1 ]; do
 	if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
 		# One or more USB sticks with error was removed
 		aplay ${SCRIPT_DIR}/error.wav >/dev/null 2>/dev/null &
-	else
-		if [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
-			# One or more USB sticks was removed
-			aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
-		fi
+	elif [ ${MISSING_COUNT_LAST} -ge 0 ] && [ ${MISSING_COUNT} -ne ${MISSING_COUNT_LAST} ]; then
+		# One or more not-processed-USB sticks was removed
+		echo "FIXME: Removed USB stick which was not processed"
+	elif [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
+		# One or more USB sticks was removed
+		aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
 	fi
 
 	let "USBS_COUNT_LAST = USBS_COUNT"
