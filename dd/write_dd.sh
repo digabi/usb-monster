@@ -78,6 +78,15 @@ if [ "${USBS_COUNT}" == "0" ]; then
 	exit 1
 fi
 
+# Ask for user input
+
+zenity --text="Write following sticks:\n\n${USBS}\n\nDevice count: ${USBS_COUNT}" --question --ok-label="Write" --cancel-label="Quit"
+if [ $? -eq 1 ]; then
+	# Cancel pressed
+	write_message_nl "User cancelled"
+	exit
+fi
+
 # Write dd image to all USB disks
 
 write_message "Starting write: "

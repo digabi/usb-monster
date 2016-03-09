@@ -17,3 +17,9 @@ any mounted filesystems.
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
  
+## Requires
+
+dd, md5sum, head, zenity.
+
+Must be executed as superuser.
+
