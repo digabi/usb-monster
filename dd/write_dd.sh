@@ -177,7 +177,7 @@ while [ ${#USBS} -gt 1 ]; do
 		aplay ${SCRIPT_DIR}/error.wav >/dev/null 2>/dev/null &
 	elif [ ${MISSING_COUNT_LAST} -ge 0 ] && [ ${MISSING_COUNT} -ne ${MISSING_COUNT_LAST} ]; then
 		# One or more not-processed-USB sticks was removed
-		aplay ${SCRIPT_DIR}/enor_processed.wav >/dev/null 2>/dev/null &
+		aplay ${SCRIPT_DIR}/not_processed.wav >/dev/null 2>/dev/null &
 	elif [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
 		# One or more USB sticks was removed
 		aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
