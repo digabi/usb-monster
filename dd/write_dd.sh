@@ -15,9 +15,14 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 # Make errors to these devices to test error-checking
 # Double-check that you're not using thes device paths as HD etc!
-#TEST_DEVICES="/dev/sdd"
+# TEST_DEVICES_PHASE_1 fail images after the test write
+# TEST_DEVICES_PHASE_2 fail images after the real write
+# Examples:
+#TEST_DEVICES_PHASE_1="/dev/sdd"
+#TEST_DEVICES_PHASE_2="/dev/sde /dev/sdf"
 # Don't make any errors
-TEST_DEVICES=
+TEST_DEVICES_PHASE_1=
+TEST_DEVICES_PHASE_2=
 
 # Search all USB disks
 
@@ -53,14 +58,28 @@ function write_message_nl {
 }
 
 function disk_read_md5 {
-	local __resultvar=$1
+	# Set
+	# BLOCKCOUNT=0 to read whole disk
+	# BLOCKCOUNT=1 to read one block
+	
+	local BLOCKCOUNT=$1
+	local __resultvar=$2
+	
+	# Remove previous MD5 files
+	if [ -f "${TMPDIR}/*" ]; then
+		rm "${TMPDIR}/*"
+	fi
 	
 	write_message "Starting to read and calculate checksums: "
 	UCOUNT=0
 	for THIS_USB in ${USBS}; do
 		write_message "${THIS_USB} "
 		BASE=`basename ${THIS_USB}`
-		( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+		if [ "${BLOCKCOUNT}" != "0" ]; then
+			( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null | head -c ${DD_BLOCK_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+		else
+			( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+		fi
 		let "UCOUNT = UCOUNT + 1"
 	done
 	write_message_nl "(${UCOUNT})"
@@ -74,9 +93,10 @@ function disk_read_md5 {
 }
 
 function disk_check_md5 {
-	local __result_ok_var=$1
-	local __result_error_var=$2
-	local __result_missing_var=$3
+	local MD5_CHECKSUM=$1
+	local __result_ok_var=$2
+	local __result_error_var=$3
+	local __result_missing_var=$4
 	
 	let "OK_COUNT = 0"
 	let "ERROR_COUNT = 0"
@@ -89,7 +109,7 @@ function disk_check_md5 {
 			if [ -f "${TMPDIR}/${BASE}" ]; then
 				# MD5 file exists - this is a known device
 				THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
-				if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
+				if [ "${MD5_CHECKSUM}" != "${THIS_MD5}" ]; then
 					echo "Verify failed: ${THIS_USB}"
 					let "ERROR_COUNT = ERROR_COUNT + 1"
 				else
@@ -143,6 +163,7 @@ fi
 # Get file size & MD5
 DD_IMAGE_SIZE=$(stat -c%s "${DD_IMAGE}")
 DD_IMAGE_MD5=$(cut --delimiter=' ' -f 1 <${DD_IMAGE}.md5)
+DD_BLOCK_SIZE_MD5=$(head -c ${DD_BLOCK_SIZE} ${DD_IMAGE} | md5sum | cut --delimiter=' ' -f 1)
 
 # Create temporary directory for verify statuses
 TMPDIR=$(mktemp -d)
@@ -182,6 +203,79 @@ while [ "${CONFIRM}" != "w" ]; do
 	fi
 done
 
+# Write one-block test image to all USB disks
+
+write_message "Starting test write: "
+UCOUNT=0
+for THIS_USB in ${USBS}; do
+	write_message "${THIS_USB} "
+	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 >/dev/null 2>/dev/null ) &
+	let "UCOUNT = UCOUNT + 1"
+done
+write_message_nl "(${UCOUNT})"
+
+write_message "Waiting for dd write processes to terminate..."
+wait
+sleep ${SLEEP_BETWEEN}
+write_message_nl "OK"
+
+# Make errors (phase 1)
+
+for THIS_USB in ${TEST_DEVICES_PHASE_1}; do
+	write_message "Creating errors to ${THIS_USB}..."
+	dd if=/dev/random of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null
+	write_message_nl "OK"
+done
+
+# Verify test images
+
+disk_read_md5 1 DISK_READ_MD5_TEST_COUNT
+
+# Check test MD5s
+
+disk_check_md5 ${DD_BLOCK_SIZE_MD5} OK_COUNT ERROR_COUNT MISSING_COUNT
+
+if [[ ${ERROR_COUNT} -gt 0 || ${MISSING_COUNT} -gt 0 ]]; then
+	# Test write found defected drives
+
+	write_message "Test write failed, waiting the operator to remove the memory sticks..."
+
+	# Set initial values to execute while loop
+	let "OK_COUNT_LAST = -1"
+	let "ERROR_COUNT_LAST = -1"
+	let "MISSING_COUNT_LAST = -1"
+
+	let "OK_COUNT = 1"
+	let "ERROR_COUNT = 1"
+	let "MISSING_COUNT = 1"
+
+	while [[ ${OK_COUNT} -gt 0 || ${ERROR_COUNT} -gt 0 || ${MISSING_COUNT} -gt 0 ]]; do
+
+		disk_check_md5 ${DD_BLOCK_SIZE_MD5} OK_COUNT ERROR_COUNT MISSING_COUNT
+		
+		if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
+			# One or more USB sticks with error was removed
+			aplay ${SCRIPT_DIR}/error.wav >/dev/null 2>/dev/null &
+		elif [ ${MISSING_COUNT_LAST} -ge 0 ] && [ ${MISSING_COUNT} -ne ${MISSING_COUNT_LAST} ]; then
+			# One or more not-processed-USB sticks was removed
+			aplay ${SCRIPT_DIR}/not_processed.wav >/dev/null 2>/dev/null &
+		elif [ ${OK_COUNT_LAST} -ge 0 ] && [ ${OK_COUNT} -ne ${OK_COUNT_LAST} ]; then
+			# One or more USB sticks was removed
+			aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
+		fi
+
+		let "OK_COUNT_LAST = OK_COUNT"
+		let "ERROR_COUNT_LAST = ERROR_COUNT"
+		let "MISSING_COUNT_LAST = MISSING_COUNT"
+
+		echo "----TEST---- (OK: ${OK_COUNT}, Errors: ${ERROR_COUNT}, Not processed: ${MISSING_COUNT})"
+	done
+
+	write_message_nl "Exiting as test write failed"
+	
+	cleanup_and_exit
+fi
+
 # Write dd image to all USB disks
 
 write_message "Starting write: "
@@ -198,9 +292,9 @@ wait
 sleep ${SLEEP_BETWEEN}
 write_message_nl "OK"
 
-# Make errors
+# Make errors (phase 2)
 
-for THIS_USB in ${TEST_DEVICES}; do
+for THIS_USB in ${TEST_DEVICES_PHASE_2}; do
 	write_message "Creating errors to ${THIS_USB}..."
 	dd if=/dev/random of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null
 	write_message_nl "OK"
@@ -208,7 +302,7 @@ done
 
 # Verify drives
 
-disk_read_md5 DISK_READ_MD5_COUNT
+disk_read_md5 0 DISK_READ_MD5_COUNT
 
 # Look for probably defected drives
 
@@ -225,7 +319,7 @@ let "MISSING_COUNT = 1"
 
 while [[ ${OK_COUNT} -gt 0 || ${ERROR_COUNT} -gt 0 || ${MISSING_COUNT} -gt 0 ]]; do
 
-	disk_check_md5 OK_COUNT ERROR_COUNT MISSING_COUNT
+	disk_check_md5 ${DD_IMAGE_MD5} OK_COUNT ERROR_COUNT MISSING_COUNT
 	
 	if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
 		# One or more USB sticks with error was removed
