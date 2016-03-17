@@ -111,12 +111,6 @@ wait
 sleep ${SLEEP_BETWEEN}
 write_message_nl "OK"
 
-# Drop memory cache
-write_message "Clear memory cache..."
-sync
-echo 3 > /proc/sys/vm/drop_caches
-write_message_nl "OK"
-
 # Make errors
 
 for THIS_USB in ${TEST_DEVICES}; do
