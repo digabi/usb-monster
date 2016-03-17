@@ -17,7 +17,7 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 # Double-check that you're not using thes device paths as HD etc!
 #TEST_DEVICES="/dev/sdd"
 # Don't make any errors
-TEST_DEVICES=
+TEST_DEVICES=/dev/sdc
 
 # Search all USB disks
 
@@ -50,6 +50,62 @@ function write_message {
 function write_message_nl {
 	write_message "$1"
 	echo ""
+}
+
+function disk_read_md5 {
+	local __resultvar=$1
+	
+	write_message "Starting to read and calculate checksums: "
+	UCOUNT=0
+	for THIS_USB in ${USBS}; do
+		write_message "${THIS_USB} "
+		BASE=`basename ${THIS_USB}`
+		( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+		let "UCOUNT = UCOUNT + 1"
+	done
+	write_message_nl "(${UCOUNT})"
+
+	write_message "Waiting for read processes to terminate..."
+	wait
+	sleep ${SLEEP_BETWEEN}
+	write_message_nl "OK"
+	
+	eval $__resultvar="'${UCOUNT}'"
+}
+
+function disk_check_md5 {
+	local __result_ok_var=$1
+	local __result_error_var=$2
+	local __result_missing_var=$3
+	
+	let "OK_COUNT = 0"
+	let "ERROR_COUNT = 0"
+	let "MISSING_COUNT = 0"
+	
+	for THIS_USB in ${USBS}; do
+		BASE=`basename ${THIS_USB}`
+		if [ -e "/dev/${BASE}" ]; then
+			# The USB is still inserted
+			if [ -f "${TMPDIR}/${BASE}" ]; then
+				# MD5 file exists - this is a known device
+				THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
+				if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
+					echo "Verify failed: ${THIS_USB}"
+					let "ERROR_COUNT = ERROR_COUNT + 1"
+				else
+					let "OK_COUNT = OK_COUNT + 1"
+				fi
+			
+			else
+				# MD5 file does not exist - this device has not been processed
+				let "MISSING_COUNT = MISSING_COUNT + 1"
+			fi
+		fi
+	done
+	
+	eval $__result_ok_var="'${OK_COUNT}'"
+	eval $__result_error_var="'${ERROR_COUNT}'"
+	eval $__result_missing_var="'${MISSING_COUNT}'"
 }
 
 function cleanup_and_exit {
@@ -152,50 +208,24 @@ done
 
 # Verify drives
 
-write_message "Starting to verify: "
-UCOUNT=0
-for THIS_USB in ${USBS}; do
-	write_message "${THIS_USB} "
-	BASE=`basename ${THIS_USB}`
-	( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
-	let "UCOUNT = UCOUNT + 1"
-done
-write_message_nl "(${UCOUNT})"
-
-write_message "Waiting for verify processes to terminate..."
-wait
-sleep ${SLEEP_BETWEEN}
-write_message_nl "OK"
+disk_read_md5 DISK_READ_MD5_COUNT
 
 # Look for probably defected drives
 
 write_message "Waiting the operator to remove the memory sticks..."
 
-let "USBS_COUNT_LAST = -1"
+# Set initial values to execute while loop
+let "OK_COUNT_LAST = -1"
 let "ERROR_COUNT_LAST = -1"
 let "MISSING_COUNT_LAST = -1"
 
-while [ ${#USBS} -gt 1 ]; do
+let "OK_COUNT = 1"
+let "ERROR_COUNT = 1"
+let "MISSING_COUNT = 1"
 
-	enum_usbs
-	
-	let "ERROR_COUNT = 0"
-	let "MISSING_COUNT = 0"
-	
-	for THIS_USB in ${USBS}; do
-		BASE=`basename ${THIS_USB}`
-		if [ -f "${TMPDIR}/${BASE}" ]; then
-			# MD5 file exists - this is a known device
-			THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
-			if [ "${DD_IMAGE_MD5}" != "${THIS_MD5}" ]; then
-				echo "Verify failed: ${THIS_USB}"
-				let "ERROR_COUNT = ERROR_COUNT + 1"
-			fi
-		else
-			# MD5 file does not exist - this device has not been processed
-			let "MISSING_COUNT = MISSING_COUNT + 1"
-		fi
-	done
+while [[ ${OK_COUNT} -gt 0 || ${ERROR_COUNT} -gt 0 || ${MISSING_COUNT} -gt 0 ]]; do
+
+	disk_check_md5 OK_COUNT ERROR_COUNT MISSING_COUNT
 	
 	if [ ${ERROR_COUNT_LAST} -ge 0 ] && [ ${ERROR_COUNT} -ne ${ERROR_COUNT_LAST} ]; then
 		# One or more USB sticks with error was removed
@@ -203,16 +233,16 @@ while [ ${#USBS} -gt 1 ]; do
 	elif [ ${MISSING_COUNT_LAST} -ge 0 ] && [ ${MISSING_COUNT} -ne ${MISSING_COUNT_LAST} ]; then
 		# One or more not-processed-USB sticks was removed
 		aplay ${SCRIPT_DIR}/not_processed.wav >/dev/null 2>/dev/null &
-	elif [ ${USBS_COUNT_LAST} -ge 0 ] && [ ${USBS_COUNT} -ne ${USBS_COUNT_LAST} ]; then
+	elif [ ${OK_COUNT_LAST} -ge 0 ] && [ ${OK_COUNT} -ne ${OK_COUNT_LAST} ]; then
 		# One or more USB sticks was removed
 		aplay ${SCRIPT_DIR}/ok.wav >/dev/null 2>/dev/null &
 	fi
 
-	let "USBS_COUNT_LAST = USBS_COUNT"
+	let "OK_COUNT_LAST = OK_COUNT"
 	let "ERROR_COUNT_LAST = ERROR_COUNT"
 	let "MISSING_COUNT_LAST = MISSING_COUNT"
 
-	echo "------------ (USBS: ${USBS_COUNT}, Errors: ${ERROR_COUNT}, Not processed: ${MISSING_COUNT})"
+	echo "------------ (OK: ${OK_COUNT}, Errors: ${ERROR_COUNT}, Not processed: ${MISSING_COUNT})"
 done
 
 aplay ${SCRIPT_DIR}/finished.wav >/dev/null 2>/dev/null
