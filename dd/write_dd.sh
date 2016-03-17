@@ -52,6 +52,20 @@ function write_message_nl {
 	echo ""
 }
 
+function cleanup_and_exit {
+	if [[ "${TMPDIR}" != "" && -d "${TMPDIR}" ]]; then
+		echo ""
+		rm -fR ${TMPDIR}
+	fi
+	
+	write_message_nl "Bye!"
+	
+	exit 0
+}
+
+# SIGINT (Ctrl-C) traps to a cleanup function
+trap cleanup_and_exit INT
+
 DD_IMAGE=$1
 if [ ${DD_IMAGE} == "" ]; then
 	echo "usage: $0 path_to_dd_image"
@@ -77,23 +91,40 @@ DD_IMAGE_MD5=$(cut --delimiter=' ' -f 1 <${DD_IMAGE}.md5)
 # Create temporary directory for verify statuses
 TMPDIR=$(mktemp -d)
 
-enum_usbs
+CONFIRM=first_round
 
-write_message_nl "USBs: ${USBS} (${USBS_COUNT})"
+while [ "${CONFIRM}" != "w" ]; do
+	clear
 
-if [ "${USBS_COUNT}" == "0" ]; then
-	echo "$0: No writeable USB sticks found"
-	exit 1
-fi
+	enum_usbs
 
-# Ask for user input
+	write_message_nl "USBs: ${USBS} (${USBS_COUNT})"
+	echo ""
 
-zenity --text="Write following sticks:\n\n${USBS}\n\nDevice count: ${USBS_COUNT}" --question --ok-label="Write" --cancel-label="Quit"
-if [ $? -eq 1 ]; then
-	# Cancel pressed
-	write_message_nl "User cancelled"
-	exit
-fi
+	if [ "${USBS_COUNT}" == "0" ]; then
+		echo "$0: No writeable USB sticks found"
+		exit 1
+	fi
+
+	# Ask for user input
+
+	echo "    Enter: Re-read USB sticks"
+	echo "C + Enter: Cancel"
+	echo "W + Enter: Start write"
+	echo ""
+
+	echo -n "Start write? "
+	read CONFIRM
+	
+	# Make lowercase
+	CONFIRM=`echo "$CONFIRM" | tr '[:upper:]' '[:lower:]'`
+	
+	if [ "${CONFIRM}" == "c" ]; then
+		# Cancel pressed
+		write_message_nl "User cancelled"
+		cleanup_and_exit
+	fi
+done
 
 # Write dd image to all USB disks
 
@@ -184,9 +215,8 @@ while [ ${#USBS} -gt 1 ]; do
 	echo "------------ (USBS: ${USBS_COUNT}, Errors: ${ERROR_COUNT}, Not processed: ${MISSING_COUNT})"
 done
 
-rm -fR ${TMPDIR}
-
 aplay ${SCRIPT_DIR}/finished.wav >/dev/null 2>/dev/null
 
 write_message_nl "Normal termination"
 
+cleanup_and_exit
