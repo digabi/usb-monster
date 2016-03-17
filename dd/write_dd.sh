@@ -17,7 +17,7 @@ SCRIPT_DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 # Double-check that you're not using thes device paths as HD etc!
 #TEST_DEVICES="/dev/sdd"
 # Don't make any errors
-TEST_DEVICES=/dev/sdc
+TEST_DEVICES=
 
 # Search all USB disks
 
