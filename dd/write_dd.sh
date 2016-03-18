@@ -75,11 +75,18 @@ function disk_read_md5 {
 	for THIS_USB in ${USBS}; do
 		write_message "${THIS_USB} "
 		BASE=`basename ${THIS_USB}`
-		if [ "${BLOCKCOUNT}" != "0" ]; then
-			( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null | head -c ${DD_BLOCK_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+		if [ -b ${THIS_USB} ]; then
+			# This is a block device
+			if [ "${BLOCKCOUNT}" != "0" ]; then
+				( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 2>/dev/null | head -c ${DD_BLOCK_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+			else
+				( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+			fi
 		else
-			( dd if=${THIS_USB} bs=${DD_BLOCK_SIZE} 2>/dev/null | head -c ${DD_IMAGE_SIZE} | md5sum >${TMPDIR}/${BASE} ) &
+			# This is not a block device
+			echo "Not a block device" >${TMPDIR}/${BASE}
 		fi
+		
 		let "UCOUNT = UCOUNT + 1"
 	done
 	write_message_nl "(${UCOUNT})"
@@ -209,7 +216,11 @@ write_message "Starting test write: "
 UCOUNT=0
 for THIS_USB in ${USBS}; do
 	write_message "${THIS_USB} "
-	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 >/dev/null 2>/dev/null ) &
+	if [ -b ${THIS_USB} ]; then
+		( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} count=1 >/dev/null 2>/dev/null ) &
+	else
+		write_message_nl "Warning: ${THIS_USB} is not a block device - USB memory has disappeared"
+	fi
 	let "UCOUNT = UCOUNT + 1"
 done
 write_message_nl "(${UCOUNT})"
@@ -282,7 +293,11 @@ write_message "Starting write: "
 UCOUNT=0
 for THIS_USB in ${USBS}; do
 	write_message "${THIS_USB} "
-	( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} >/dev/null 2>/dev/null ) &
+	if [ -b ${THIS_USB} ]; then
+		( dd if=${DD_IMAGE} of=${THIS_USB} bs=${DD_BLOCK_SIZE} >/dev/null 2>/dev/null ) &
+	else
+		write_message_nl "Warning: ${THIS_USB} is not a block device - USB memory has disappeared"
+	fi
 	let "UCOUNT = UCOUNT + 1"
 done
 write_message_nl "(${UCOUNT})"
