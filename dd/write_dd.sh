@@ -117,8 +117,12 @@ function disk_check_md5 {
 				# MD5 file exists - this is a known device
 				THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
 				if [ "${MD5_CHECKSUM}" != "${THIS_MD5}" ]; then
-					echo "Verify failed: ${THIS_USB}"
+					THIS_BUSNODE=`usb_fsnode_to_busnode ${THIS_USB}`
+					echo "Verify failed: ${THIS_USB}, resetting ${THIS_BUSNODE}"
 					let "ERROR_COUNT = ERROR_COUNT + 1"
+					
+					# Init device to blink its LED
+					$SCRIPT_DIR/usbreset ${THIS_BUSNODE}
 				else
 					let "OK_COUNT = OK_COUNT + 1"
 				fi
@@ -133,6 +137,21 @@ function disk_check_md5 {
 	eval $__result_ok_var="'${OK_COUNT}'"
 	eval $__result_error_var="'${ERROR_COUNT}'"
 	eval $__result_missing_var="'${MISSING_COUNT}'"
+}
+
+function usb_fsnode_to_busnode {
+	# Resolves fsnode (/dev/sdan) to USB bus node (/dev/bus/usb/001/002)
+	FSNODE=$1
+	
+	# Get USB BUSNUM and DEVNUM from udevadm
+	_BUSNUM=`udevadm info --attribute-walk --name=${FSNODE} | grep ATTRS\{busnum\} | head -n 1 | grep -o -P "\d*"`
+	_DEVNUM=`udevadm info --attribute-walk --name=${FSNODE} | grep ATTRS\{devnum\} | head -n 1 | grep -o -P "\d*"`
+	
+	# Left pad with zeros
+	BUSNUM=$(printf "%03i" ${_BUSNUM})
+	DEVNUM=$(printf "%03i" ${_DEVNUM})
+	
+	echo "/dev/bus/usb/${BUSNUM}/${DEVNUM}"
 }
 
 function cleanup_and_exit {
