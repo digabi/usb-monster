@@ -1,10 +1,16 @@
-# Arch Linux
+# Arch Linux Setup
 
 The scripts in this directory set up usb-monster for Arch Linux Live image
 (https://www.archlinux.org/download/). The scripts have been tested with `2016.03.01`.
 
 You may want to use Arch instead of Debian/Ubuntu as it offers the latest
 kernel which results better USB performance.
+
+## Prerequisites
+
+The script expects to find an ext-formatted filesystem in `/dev/sda1` or `/dev/sda5`.
+The filesystem should contain path `/home/usb` or `/home/ytl` where the scripts
+and images are kept.
 
 ## Usage
 
