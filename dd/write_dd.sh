@@ -122,7 +122,8 @@ function disk_check_md5 {
 					let "ERROR_COUNT = ERROR_COUNT + 1"
 					
 					# Init device to blink its LED
-					$SCRIPT_DIR/usbreset ${THIS_BUSNODE}
+					# Commented out since usbreset caused lag and instability
+					#$SCRIPT_DIR/usbreset ${THIS_BUSNODE}
 				else
 					let "OK_COUNT = OK_COUNT + 1"
 				fi
