@@ -41,9 +41,17 @@ pacman -Syy
 pacman --noconfirm -S sysstat
 pacman --noconfirm -S alsa-utils
 pacman --noconfirm -S git
+pacman --noconfirm -S pulseaudio
+pacman --noconfirm -S pulseaudio-alsa
 
-# Unmute sound
-amixer sset Master unmute
+# Start PulseAudio
+groupadd --system pulse
+useradd --system --gid pulse --home /var/run/pulse pulse
+groupadd --system pulse-access
+usermod -aG audio pulse
+usermod -aG pulse-access root
+usermod -aG pulse-access pulse
+pulseaudio --system -D
 
 # Delete existing burning code and get a fresh one
 cd ${BURNHOME}
