@@ -10,6 +10,9 @@
 # a ext4 filesystem with images and other tools located at /home/usb or /home/ytl.
 #
 
+# Remount root with more space
+mount -o remount,size=2G /run/archiso/cowspace
+
 # Set keymap
 loadkeys /usr/share/kbd/keymaps/i386/qwerty/fi.map.gz
 
