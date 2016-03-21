@@ -17,7 +17,7 @@ and images are kept.
 Get and execute script:
 
 	# wget -O - https://raw.githubusercontent.com/digabi/usb-monster/master/env_arch/setenv.sh | bash
-	# cd /mnt/home/usb   \[OR\]   cd /mnt/home/ytl
+	# cd /mnt/home/usb   [OR]   cd /mnt/home/ytl
 
 List audio devices:
 
@@ -43,5 +43,5 @@ Writing the sticks
 The setup script (`setenv.sh`) has installed iostat for you. Select second
 virtual terminal and execute
 
-	# cd /mnt/home/usb   \[OR\]   cd /mnt/home/ytl
+	# cd /mnt/home/usb   [OR]   cd /mnt/home/ytl
 	# sh usb-monster/env_arch/iostat.sh
