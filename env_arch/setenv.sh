@@ -19,6 +19,7 @@ loadkeys /usr/share/kbd/keymaps/i386/qwerty/fi.map.gz
 # Try mounting hard disk and hope that you'll find something
 umount /mnt
 mount /dev/sda1 /mnt
+mount /dev/sda3 /mnt
 mount /dev/sda5 /mnt
 
 if [ ! -d /mnt/home ]; then
