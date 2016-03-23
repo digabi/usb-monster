@@ -36,7 +36,7 @@ function enum_usbs () {
 			DEV_USBDISK=`basename ${USBDISK}`
 			DEV_USBDISK="/dev/${DEV_USBDISK}"
 			if grep -qs "${DEV_USBDISK}" /proc/mounts; then
-				write_message "[Skipping mounted USB disk ${DEV_USBDISK}] "
+				write_message_nl "Skipping mounted USB disk ${DEV_USBDISK}"
 				NOP=1
 			else
 				USBS="${USBS} ${DEV_USBDISK}"
@@ -118,7 +118,7 @@ function disk_check_md5 {
 				THIS_MD5=`cut --delimiter=' ' -f 1 <${TMPDIR}/${BASE}`
 				if [ "${MD5_CHECKSUM}" != "${THIS_MD5}" ]; then
 					THIS_BUSNODE=`usb_fsnode_to_busnode ${THIS_USB}`
-					echo "Verify failed: ${THIS_USB}, resetting ${THIS_BUSNODE}"
+					#echo "Verify failed: ${THIS_USB}, resetting ${THIS_BUSNODE}"
 					let "ERROR_COUNT = ERROR_COUNT + 1"
 					
 					# Init device to blink its LED
