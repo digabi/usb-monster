@@ -8,7 +8,7 @@ You need to install fio (`pacman -S fio`).
 
 Following figures were used (this is a sample output):
 
-```
+<pre>
 --Testi alkaa Sun Jun 19 12:16:13 UTC 2016 4-12
 --Laite: 4-12
 P: /devices/pci0000:00/0000:00:01.0/0000:01:00.0/usb5/5-2/5-2.1/5-2.1:1.0/host10/target10:0:0/10:0:0:0/block/sdc
@@ -47,11 +47,11 @@ E: USEC_INITIALIZED=1756287262
 --Lineaarinen kirjoitusnopeus 4-12
 2000+0 records in
 2000+0 records out
-2097152000 bytes (2.1 GB, 2.0 GiB) copied, 194.922 s, *10.8 MB/s (1)*
+2097152000 bytes (2.1 GB, 2.0 GiB) copied, 194.922 s, <b>10.8 MB/s (1)</b>
 --Lineaarinen lukunopeus 4-12
 2000+0 records in
 2000+0 records out
-2097152000 bytes (2.1 GB, 2.0 GiB) copied, 226.539 s, *9.3 MB/s (2)*
+2097152000 bytes (2.1 GB, 2.0 GiB) copied, 226.539 s, <b>9.3 MB/s (2)</b>
 --Luodaan tiedostojärjestelmä 4-12
 Creating filesystem with 7756288 4k blocks and 1941504 inodes
 Filesystem UUID: 18cf96db-e8b2-4bc9-baff-8e615752ac64
@@ -126,10 +126,10 @@ random_access: (groupid=0, jobs=1): err= 0: pid=1998: Sun Jun 19 12:39:55 2016
      | 99.00th=[   11], 99.50th=[   11], 99.90th=[   12], 99.95th=[   12],
      | 99.99th=[   12]
     bw (KB  /s): min=    8, max=  120, per=100.00%, avg=20.17, stdev=15.83
-  write: io=46132KB, bw=80040B/s, iops=*19 (3)*, runt=590193msec
+  write: io=46132KB, bw=80040B/s, iops=<b>19 (3)</b>, runt=590193msec
     slat (usec): min=2, max=738492, avg=144.46, stdev=7021.59
     clat (usec): min=0, max=13, avg= 0.58, stdev= 0.66
-     lat (usec): min=3, max=738494, avg=*145.25 (4)*, stdev=*7021.62 (5)*
+     lat (usec): min=3, max=738494, avg=<b>145.25 (4)</b>, stdev=<b>7021.62 (5)</b>
     clat percentiles (usec):
      |  1.00th=[    0],  5.00th=[    0], 10.00th=[    0], 20.00th=[    0],
      | 30.00th=[    0], 40.00th=[    0], 50.00th=[    1], 60.00th=[    1],
@@ -152,7 +152,7 @@ Run status group 0 (all jobs):
 Disk stats (read/write):
   sdc: ios=1263/12854, merge=0/167, ticks=55853/1773630, in_queue=1830080, util=99.92%
 --Testi valmis Sun Jun 19 12:39:56 UTC 2016 4-12
-```
+</pre>
 
  1. Linear write (e.g. *10.8 MB/s*)
  2. Linear read (e.g. *9.3 MB/s*)
