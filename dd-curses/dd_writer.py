@@ -9,7 +9,7 @@ class dd_writer (object):
 		self.RE_OUTPUT = { 'megs': '([\d,]+..?)', 'eta': 'ETA (\d+\:\d+\:\d+)', 'speed': '\[([\d,]+..?\/s)', 'percent': '(\d+)%', 'md5sum': '^([0-9a-f]+) ' }
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
-		self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
+		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
 		
 		self.image_file = None
 		self.device_file = None
@@ -155,6 +155,10 @@ class dd_writer (object):
 			f = open(md5_filename, "r")
 			file_md5 = f.readline().rstrip()
 			f.close()
+			
+			md5_re = re.search(r'^([0-9a-f]+) ', file_md5)
+			if md5_re:
+				file_md5 = md5_re.group(1)
 			
 			return file_md5
 		
