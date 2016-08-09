@@ -4,6 +4,9 @@
 import curses, re, sys, os, time, shlex, subprocess
 from dd_writer import dd_writer
 
+AUDIO_OK = "ok.wav"
+AUDIO_ERROR = "error.wav"
+
 # See get_usb_path(), this is a global cache variable
 USB_PATH_CACHE = {}
 
@@ -28,6 +31,10 @@ def my_log (message):
 def is_readable (path):
 	return os.access(path, os.R_OK)
 
+def play_file (filepath):
+	null_file = open("/dev/null", "w")
+	subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
+	
 def is_mounted (path):
 	f = open("/proc/mounts")
 	lines = f.readlines()
@@ -77,6 +84,14 @@ def get_usb_path (device):
 def update_writer_status (my_writers, current_usbs = None):
 	writer_count = 0
 	still_working_count = 0
+	current_usbs_count = {
+		0: { 0:0, 1:0 },
+		1: { 0:0, 1:0 },
+		2: { 0:0, 1:0 },
+		3: { 0:0, 1:0 },
+		4: { 0:0, 1:0 },
+		5: { 0:0, 1:0 }
+	}
 	
 	writer_ids = []
 	for this_device in my_writers:
@@ -107,16 +122,22 @@ def update_writer_status (my_writers, current_usbs = None):
 			if current_usbs != None:
 				if this_device in current_usbs:
 					device_present = "PRESENT"
+					current_usbs_count[status][1] += 1
 				else:
 					device_present = "REMOVED"
+					current_usbs_count[status][0] += 1
 					
 				screen.addstr(2+writer_count, 24, device_present)
 			
 	screen.refresh()
-	return still_working_count
+	
+	if current_usbs == None:
+		return still_working_count
+	else:
+		return current_usbs_count
 
 def update_message (new_message):
-	screen.addstr(2, 1, new_message, curses.A_BOLD)
+	screen.addstr(1, 1, new_message, curses.A_BOLD)
 	screen.clrtoeol()
 	screen.refresh()
 	
@@ -134,7 +155,7 @@ if not is_readable(image_file):
 	my_exit(1, "File %s is not readable")
 	
 # FIXME: Check that image_file exists, is readable etc.
-screen.addstr(1, 1, "Image file: %s" % image_file, curses.A_DIM)
+screen.addstr(0, 1, "Image file: %s" % image_file, curses.A_DIM)
 	
 # Create writers
 while True:
@@ -174,12 +195,31 @@ while update_writer_status(writers) > 0:
 
 update_message("Done! You may now remove the USB memories. Press any key to exit.")
 
+status_previous = None
 stop_loop = False
 screen.nodelay(1)
 while not stop_loop:
 	time.sleep(0.5)
 	now_usbs = enum_usbs()
-	update_writer_status(writers, now_usbs)
+	
+	status_now = update_writer_status(writers, now_usbs)
+	
+	if (status_previous and status_now[5][1] != status_previous[5][1]):
+		# Removed USB with "failed" status
+		play_file(AUDIO_ERROR)
+		curses.flash()
+	
+	if (status_previous and status_now[4][1] != status_previous[4][1]):
+		# Removed USB with "error" status
+		play_file(AUDIO_ERROR)
+		curses.flash()
+	
+	if (status_previous and status_now[3][1] != status_previous[3][1]):
+		# Removed USB with "finished" status
+		play_file(AUDIO_OK)
+	
+	status_previous = status_now
+	
 	key = screen.getch()
 	if key > -1:
 		stop_loop = True
