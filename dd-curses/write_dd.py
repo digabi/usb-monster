@@ -163,6 +163,10 @@ while True:
 	update_message("Searching for USB devices...")
 	all_usbs = enum_usbs()
 	
+	# Show number of usb devices
+	winsize = screen.getmaxyx()
+	screen.addstr(0, winsize[1]-4, "% 3d" % len(all_usbs))
+	
 	screen.move(2,1)
 	screen.clrtobot()
 
@@ -202,6 +206,9 @@ while not stop_loop:
 	time.sleep(0.5)
 	now_usbs = enum_usbs()
 	
+	winsize = screen.getmaxyx()
+	screen.addstr(0, winsize[1]-4, "% 3d" % len(now_usbs))
+
 	status_now = update_writer_status(writers, now_usbs)
 	
 	if (status_previous and status_now[5][1] != status_previous[5][1]):
