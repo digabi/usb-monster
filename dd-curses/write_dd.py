@@ -84,7 +84,24 @@ def get_usb_path (device):
 		return re_result.group(1)
 	
 	return None
+
+def get_window_size_xy ():
+	# Get screen size
+	winsize = screen.getmaxyx()
+
+	return { 'x': winsize[1], 'y': winsize[0] }
 	
+def get_writer_status_coords (writer_n):
+	screen_size = get_window_size_xy()
+	
+	col_height = screen_size['y']-3
+	col_width = screen_size['x']/2
+	
+	column = (writer_n-1) / col_height
+	row = (writer_n-1) % col_height
+	
+	return { 'x': column * col_width, 'y': row+2 }
+
 def update_writer_status (my_writers, current_usbs = None):
 	writer_count = 0
 	still_working_count = 0
@@ -110,9 +127,13 @@ def update_writer_status (my_writers, current_usbs = None):
 		status = this_writer.update_write_status()
 		
 		writer_count += 1
-		screen.addstr(2+writer_count, COL_USBID, this_usb_path)
+		
+		# Get coordinates for status row
+		writer_coords = get_writer_status_coords(writer_count)
+		
+		screen.addstr(writer_coords['y'], writer_coords['x']+COL_USBID, this_usb_path)
 		screen.clrtoeol()
-		screen.addstr(2+writer_count, COL_STATUS, this_writer.update_write_status_str(status))
+		screen.addstr(writer_coords['y'], writer_coords['x']+COL_STATUS, this_writer.update_write_status_str(status))
 		screen.clrtoeol()
 		
 		if status == 1 or status == 2:
@@ -121,7 +142,7 @@ def update_writer_status (my_writers, current_usbs = None):
 			
 			status_line = this_writer.get_dd_status()
 			if status_line != None:
-				screen.addstr(2+writer_count, COL_WRITE, status_line)
+				screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, status_line)
 		else:
 			if current_usbs != None:
 				if this_device in current_usbs:
@@ -131,7 +152,7 @@ def update_writer_status (my_writers, current_usbs = None):
 					device_present = "REMOVED"
 					current_usbs_count[status][0] += 1
 					
-				screen.addstr(2+writer_count, COL_WRITE, device_present)
+				screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present)
 			
 	screen.refresh()
 	
