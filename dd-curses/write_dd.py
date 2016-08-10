@@ -149,7 +149,7 @@ def update_writer_status (my_writers, current_usbs = None):
 					device_present = "PRESENT"
 					current_usbs_count[status][1] += 1
 				else:
-					device_present = "REMOVED"
+					device_present = "-"
 					current_usbs_count[status][0] += 1
 					
 				screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present)
