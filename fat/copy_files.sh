@@ -88,7 +88,7 @@ echo "OK"
 for THIS_USB in ${USBS}; do
 	echo "Starting copy process: ${THIS_USB}"
 	THIS_TEMP=`mktemp -d`
-	( mount ${THIS_USB}1 ${THIS_TEMP} && cp -r /home/digabi/Desktop/copy_files/* ${THIS_TEMP}/ && umount ${THIS_TEMP} && rmdir ${THIS_TEMP} ) &
+	( mount ${THIS_USB}1 ${THIS_TEMP} && cp -r ${HOME}/Desktop/copy_files/* ${THIS_TEMP}/ && umount ${THIS_TEMP} && rmdir ${THIS_TEMP} ) &
 done
 
 echo -n "Waiting copy processes to terminate..."
