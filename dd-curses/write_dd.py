@@ -37,7 +37,7 @@ def is_readable (path):
 
 def play_file (filepath):
 	null_file = open("/dev/null", "w")
-	#subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
+	subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
 	
 def is_mounted (path):
 	f = open("/proc/mounts")
