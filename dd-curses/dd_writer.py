@@ -76,9 +76,9 @@ class dd_writer (object):
 		fl = fcntl.fcntl(fd, fcntl.F_GETFL)
 		fcntl.fcntl(fd, fcntl.F_SETFL, fl | os.O_NONBLOCK)
 		try:
-			return output.read()
+			return str(output.read())
 		except:
-			return ''
+			return str('')
 
 	def extract_dd_data (self, output):
 		result_dict = {}

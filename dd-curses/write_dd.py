@@ -1,8 +1,12 @@
-#!/usr/bin/env python
+#!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
 import curses, re, sys, os, time, shlex, subprocess
 from dd_writer import dd_writer
+
+COL_USBID = 1
+COL_STATUS = 20
+COL_WRITE = 30
 
 AUDIO_OK = "ok.wav"
 AUDIO_ERROR = "error.wav"
@@ -33,7 +37,7 @@ def is_readable (path):
 
 def play_file (filepath):
 	null_file = open("/dev/null", "w")
-	subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
+	#subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
 	
 def is_mounted (path):
 	f = open("/proc/mounts")
@@ -54,10 +58,10 @@ def enum_usbs ():
 	usb_re = re.compile('usb')
 	
 	for this_blockdr in os.listdir('/sys/block/'):
+		check_path = "/sys/block/%s/device" % this_blockdr
 		try:
-			check_path = "/sys/block/%s/device" % this_blockdr
 			blockdr_readlink_tuplet = subprocess.Popen(shlex.split("readlink -f %s" % check_path), stdout=subprocess.PIPE).communicate()
-			blockdr_readlink = blockdr_readlink_tuplet[0].rstrip()
+			blockdr_readlink = str(blockdr_readlink_tuplet[0]).rstrip()
 		except:
 			blockdr_readlink = None
 		
@@ -73,7 +77,7 @@ def get_usb_path (device):
 		return USB_PATH_CACHE[device]
 		
 	output_tuplet = subprocess.Popen(shlex.split("udevadm info %s" % device), stdout=subprocess.PIPE).communicate()
-	output = output_tuplet[0]
+	output = str(output_tuplet[0])
 	re_result = re.search(r'ID_PATH=.+\-usb-(.+?)-', output)
 	if re_result:
 		USB_PATH_CACHE[device] = re_result.group(1)
@@ -106,9 +110,9 @@ def update_writer_status (my_writers, current_usbs = None):
 		status = this_writer.update_write_status()
 		
 		writer_count += 1
-		screen.addstr(2+writer_count, 1, this_usb_path)
+		screen.addstr(2+writer_count, COL_USBID, this_usb_path)
 		screen.clrtoeol()
-		screen.addstr(2+writer_count, 11, this_writer.update_write_status_str(status))
+		screen.addstr(2+writer_count, COL_STATUS, this_writer.update_write_status_str(status))
 		screen.clrtoeol()
 		
 		if status == 1 or status == 2:
@@ -117,7 +121,7 @@ def update_writer_status (my_writers, current_usbs = None):
 			
 			status_line = this_writer.get_dd_status()
 			if status_line != None:
-				screen.addstr(2+writer_count, 24, status_line)
+				screen.addstr(2+writer_count, COL_WRITE, status_line)
 		else:
 			if current_usbs != None:
 				if this_device in current_usbs:
@@ -127,7 +131,7 @@ def update_writer_status (my_writers, current_usbs = None):
 					device_present = "REMOVED"
 					current_usbs_count[status][0] += 1
 					
-				screen.addstr(2+writer_count, 24, device_present)
+				screen.addstr(2+writer_count, COL_WRITE, device_present)
 			
 	screen.refresh()
 	
