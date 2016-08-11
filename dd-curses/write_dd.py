@@ -5,7 +5,7 @@ import curses, re, sys, os, time, shlex, subprocess
 from dd_writer import dd_writer
 
 COL_USBID = 1
-COL_DEVPATH = 15
+COL_DEVPATH = 13
 COL_STATUS = 25
 COL_WRITE = 35
 
@@ -76,15 +76,20 @@ def enum_usbs ():
 def get_usb_path (device):
 	if device in USB_PATH_CACHE:
 		return USB_PATH_CACHE[device]
-		
-	output_tuplet = subprocess.Popen(shlex.split("udevadm info %s" % device), stdout=subprocess.PIPE).communicate()
-	output = str(output_tuplet[0])
-	re_result = re.search(r'ID_PATH=.+\-usb-(.+?)-', output)
-	if re_result:
-		USB_PATH_CACHE[device] = re_result.group(1)
-		return re_result.group(1)
 	
-	return None
+	re_devshort = re.search(r'\/([a-z]+)$', device)
+	if re_devshort:
+		devshort = re_devshort.group(1)
+		output_tuplet = subprocess.Popen(["sh", "-c", 'ls -l /dev/disk/by-path/ | grep -E "%s$"' % devshort], stdout=subprocess.PIPE).communicate()
+		line = str(output_tuplet[0].rstrip())
+		
+		re_devids = re.search(r'pci-\d+:([a-f0-9]+):.+usb-\d+:([\.\d]+):', line)
+		if re_devids:
+			devid = re_devids.group(1)+'/'+re_devids.group(2)
+			USB_PATH_CACHE[device] = devid 
+			return devid
+	
+	return ""
 
 def get_window_size_xy ():
 	# Get screen size
