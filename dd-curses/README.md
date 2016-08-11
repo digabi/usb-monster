@@ -11,14 +11,21 @@ any mounted filesystems.
 ## Usage
 
  1. Disable automount etc.
- 2. Execute as root (`python write_dd.sh path/to_image.dd`)
+ 2. Execute as root (`python2 write_dd.sh path/to_image.dd`)
  3. If the failing device(s) is reported
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
  
 ## Requires
 
-dd, md5sum, head, python, readlink.
+dd, md5sum, head, python 2.7, readlink.
 
 Must be executed as superuser.
 
+## Documentation specific to MEB copyers
+
+`meb_docs` contains documentation related to copying workstations used by MEB.
+
+ * Mapping between USB IDs and hubs/ports (xlsx file)
+ * Connecting USB hubs to copying workstations in a way that the mapping is valid (pptx file)
+ 
