@@ -5,8 +5,9 @@ import curses, re, sys, os, time, shlex, subprocess
 from dd_writer import dd_writer
 
 COL_USBID = 1
-COL_STATUS = 20
-COL_WRITE = 30
+COL_DEVPATH = 15
+COL_STATUS = 25
+COL_WRITE = 35
 
 AUDIO_OK = "ok.wav"
 AUDIO_ERROR = "error.wav"
@@ -132,6 +133,8 @@ def update_writer_status (my_writers, current_usbs = None):
 		writer_coords = get_writer_status_coords(writer_count)
 		
 		screen.addstr(writer_coords['y'], writer_coords['x']+COL_USBID, this_usb_path)
+		screen.clrtoeol()
+		screen.addstr(writer_coords['y'], writer_coords['x']+COL_DEVPATH, this_device)
 		screen.clrtoeol()
 		screen.addstr(writer_coords['y'], writer_coords['x']+COL_STATUS, this_writer.update_write_status_str(status))
 		screen.clrtoeol()
