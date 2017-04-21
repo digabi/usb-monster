@@ -16,11 +16,15 @@ any mounted filesystems.
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
  
-## Requires
+## Requirements
 
 dd, md5sum, head, python 2.7, readlink.
 
 Must be executed as superuser.
+
+Required packages:
+ * Arch Linux: alsa-utils, pv, python2
+ * Debian Jessie: coreutils, alsa-utils, pv, python2.7-minimal
 
 ## Documentation specific to MEB copyers
 
