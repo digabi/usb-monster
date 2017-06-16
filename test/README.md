@@ -1,8 +1,11 @@
 # USB-memory performance tests
 
-This testing script was used in tendering process summer 2016. It runs `dd`
+Testing script `testi_2016.sh` was used in tendering process summer 2016. It runs `dd`
 and `fio` commands and logs its output. `Arch 2016.03.01` was used as the
 base distro as its USB stack appears to be solid on our hardware.
+
+The script `testi_2017.sh` was used summer 2017 and it contains only the `dd` part of the
+2016 test.
 
 You need to install fio (`pacman -S fio`).
 
