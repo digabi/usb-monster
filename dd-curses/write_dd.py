@@ -37,8 +37,13 @@ def is_readable (path):
 	return os.access(path, os.R_OK)
 
 def play_file (filepath):
-	null_file = open("/dev/null", "w")
-	subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
+	if is_readable(filepath):
+		null_file = open("/dev/null", "w")
+		try:
+			subprocess.Popen(shlex.split("aplay %s" % filepath), stdout=null_file, stderr=null_file)
+		except:
+			# Failed to play tone (maybe there is no aplay): don't care
+			pass
 	
 def is_mounted (path):
 	f = open("/proc/mounts")
