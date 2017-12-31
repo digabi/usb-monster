@@ -11,7 +11,7 @@ class dd_helper (object):
 		self.RE_OUTPUT = {
 			'megs': '([\d,]+..?)',
 			'eta': 'ETA (\d+\:\d+\:\d+)',
-			'speed': '\[([\d,]+..?\/s)',
+			'speed': '\[\s*([\d,]+.+?\/s)\]',
 			'percent': '(\d+)%',
 			'md5sum': '^([0-9a-f]+) '
 		}
