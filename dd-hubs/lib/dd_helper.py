@@ -24,6 +24,8 @@ class dd_helper (object):
 		self.dd_image_size = None
 		self.dd_image_md5 = None
 
+		self.usbhub_coords = None
+
 		self.status_code = 0
 		self.dd_handle = None
 
@@ -78,6 +80,12 @@ class dd_helper (object):
 
 		return self.status_code
 
+	def set_usbhub_coords (self, new_coords):
+		self.usbhub_coords = new_coords
+
+	def get_usbhub_coords (self):
+		return self.usbhub_coords
+		
 	def non_block_read(self, output):
 		''' even in a thread, a normal read with block until the buffer is full '''
 		fd = output.fileno()

@@ -1,10 +1,12 @@
 # Write dd image to USB media (curses version)
 
 This is the 3rd generation dd frontend. Planned new features:
- * Shows USB-writing status "graphically" mapped to your USB hubs
- * Continuous writing: no need to exit and restart script after a batch
+ * After boot create a mapping between USB paths and USB hub/port coordinates
+ * Show USB hub/port coordinates when showing writing status
+ * Continuous changing of USB sticks: no need to exit and restart script after a batch
 
 `write_dd.sh`
+ * Creates mapping between USB paths and USB hub/port coordinates and save it to `~/.config/usb-monster/usb-mapping.json`
  * Calculates a MD5 sum for the given dd image file and stores it to same directory with the image
  * Writes given dd image to all USB media
  * Verifies the dd image from the USB media to the calculated MD5
