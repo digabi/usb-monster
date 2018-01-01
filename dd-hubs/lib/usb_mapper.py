@@ -63,10 +63,7 @@ class usb_mapper (object):
             'mapping': self.current_mapping
         }
 
-        if self.current_mapping == None:
-            f.write('[]')
-        else:
-            f.write(json.dumps(config))
+        f.write(json.dumps(config))
         f.close()
 
     def mapping_clear (self):
@@ -96,6 +93,9 @@ class usb_mapper (object):
 
     def get_hub_coords (self, usb_path):
         # Return USB hub coordinates for given USB path (e.g. "00/1")
+
+        if self.current_mapping == None:
+            return None
 
         for this_mapstr in self.current_mapping.iterkeys():
             if usb_path == self.current_mapping[this_mapstr]:
