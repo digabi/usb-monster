@@ -135,12 +135,15 @@ def get_writer_status_coords (writer_n):
 
 def get_new_mapping (my_screen):
 	# Make sure there are no USBs present
+
 	usbs_present = True
+
 	while usbs_present:
 		current_usbs = enum_usbs()
+		update_corner("USBs: % 3d" % len(current_usbs))
 		if len(current_usbs) > 0:
-			update_message("To start USB mapping process please remove all USB sticks and press any key!")
-			key = my_screen.getch()
+			update_message("To start USB mapping process please remove all USB sticks!")
+			time.sleep(1)
 		else:
 			usbs_present = False
 
