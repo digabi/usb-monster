@@ -133,7 +133,7 @@ def get_writer_status_coords (writer_n):
 
 	return { 'x': column * col_width, 'y': row+2 }
 
-def get_new_mapping ():
+def get_new_mapping (my_screen):
 	current_usbs = enum_usbs()
 	if len(current_usbs) > 0:
 		my_exit(0, "Please remove all USB sticks and restart")
@@ -146,9 +146,13 @@ def get_new_mapping ():
 
 	new_mapping = []
 
+	# Key input to non-blocking mode
+	my_screen.timeout(0)
+	curses.noecho()
+
 	for this_hub in range(1,hubs+1):
 		for this_port in range(1,ports+1):
-			update_message("Please insert USB stick to hub %d, port %d or press space to leave unused" % (this_hub, this_port))
+			update_message("Insert USB stick to hub %d, port %d - SPACE: skip this, s: skip mapping, x: exit" % (this_hub, this_port))
 
 			still_loop = True
 
@@ -161,8 +165,21 @@ def get_new_mapping ():
 
 				if len(added_usbs) == 0:
 					# Check for space bar
-					pass
-					time.sleep(1)
+					key = my_screen.getch()
+					if key == ord(' '):
+						my_log("Skipped mapping: %d:%d" % (this_hub, this_port))
+						still_loop = False
+						update_message("Skipping hub %d, port %d..." % (this_hub, this_port))
+						time.sleep(2)
+					elif key == ord('x') or key == ord('X'):
+						my_exit(0, "User terminated while creating USB mapping")
+					elif key == ord('s') or key == ord('S'):
+						update_message("Skipping USB mapping, using an empty map")
+						time.sleep(2)
+						my_log("User skipped USB mapping, returns an empty map")
+						return []
+					else:
+						time.sleep(0.5)
 				elif len(added_usbs) == 1:
 					# We have one USB added
 					new_mapping.append([this_hub, this_port, get_usb_path(added_usbs[0])])
@@ -171,6 +188,8 @@ def get_new_mapping ():
 					still_loop = False
 				else:
 					update_message("Please insert only one USB at a time!")
+
+	curses.echo()
 
 	return new_mapping
 
@@ -254,6 +273,7 @@ my_log("Started")
 
 screen = curses.initscr()
 screen.clear()
+curses.echo()
 
 # Check parameter
 try:
@@ -274,7 +294,7 @@ if usb_mapper.if_config():
 else:
 	# Create new config for USB mapper
 	my_log("Creating new USB mapper data")
-	usb_mapper.set_config(get_new_mapping())
+	usb_mapper.set_config(get_new_mapping(screen))
 	usb_mapper.write_config()
 
 # Create writers
@@ -300,6 +320,8 @@ while True:
 	update_writer_status(usb_mapper, writers)
 
 	update_message("Press X to exit, Enter to write, any other to rescan USBs...")
+	# Key input to blocking mode
+	screen.timeout(-1)
 	key = screen.getch()
 
 	if key == ord('x') or key == ord('X'):
