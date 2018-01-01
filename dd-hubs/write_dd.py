@@ -13,9 +13,9 @@ from dd_helper import dd_helper
 from usb_mapper import usb_mapper
 
 COL_USBID = 1
-COL_DEVPATH = 13
-COL_STATUS = 25
-COL_WRITE = 35
+COL_DEVPATH = 10
+COL_STATUS = 22
+COL_WRITE = 32
 
 AUDIO_OK = "ok.wav"
 AUDIO_ERROR = "error.wav"
@@ -31,8 +31,8 @@ def my_exit (code, message):
 
 	screen.clear()
 	curses.flash()
-	screen.addstr(1,1,message, curses.A_BOLD)
-	screen.addstr(3,1,"Press SPACE to exit")
+	screen.addstr(1,0,message, curses.A_BOLD)
+	screen.addstr(3,0,"Press SPACE to exit")
 	screen.refresh()
 
 	while screen.getch() != ord(' '):
@@ -134,15 +134,19 @@ def get_writer_status_coords (writer_n):
 	return { 'x': column * col_width, 'y': row+2 }
 
 def get_new_mapping (my_screen):
-	current_usbs = enum_usbs()
-	if len(current_usbs) > 0:
-		my_exit(0, "Please remove all USB sticks and restart")
+	# Make sure there are no USBs present
+	usbs_present = True
+	while usbs_present:
+		current_usbs = enum_usbs()
+		if len(current_usbs) > 0:
+			update_message("To start USB mapping process please remove all USB sticks and press any key!")
+			key = my_screen.getch()
+		else:
+			usbs_present = False
 
-	my_log("current_usbs:")
-	my_log(current_usbs)
-
-	hubs = int(get_input("Number of USB hubs:"))
-	ports = int(get_input("Number of ports in each USB hub:"))
+	curses.echo()
+	hubs = int(get_input("Number of USB hubs in your setting:"))
+	ports = int(get_input("Number of USB ports in each USB hub:"))
 
 	new_mapping = []
 
@@ -152,7 +156,7 @@ def get_new_mapping (my_screen):
 
 	for this_hub in range(1,hubs+1):
 		for this_port in range(1,ports+1):
-			update_message("Insert USB stick to hub %d, port %d - SPACE: skip this, s: skip mapping, x: exit" % (this_hub, this_port))
+			update_message("Insert USB to hub %d, port %d - SPACE: skip this, S: skip mapping, X: exit" % (this_hub, this_port))
 
 			still_loop = True
 
@@ -259,8 +263,14 @@ def update_message (new_message):
 	screen.clrtoeol()
 	screen.refresh()
 
+def update_corner (new_message):
+	winsize = screen.getmaxyx()
+	screen.addstr(0, winsize[1]-len(new_message), new_message)
+	screen.clrtoeol()
+	screen.refresh()
+
 def get_input (new_message):
-	screen.addstr(1, 1, new_message, curses.A_BOLD)
+	screen.addstr(1, 0, new_message, curses.A_BOLD)
 	screen.clrtoeol()
 	screen.refresh()
 
@@ -284,7 +294,7 @@ except:
 if not is_readable(image_file):
 	my_exit(1, "File %s is not readable")
 
-screen.addstr(0, 1, "Image file: %s" % image_file, curses.A_DIM)
+screen.addstr(0, 0, "Image file: %s" % image_file, curses.A_DIM)
 my_log("Image file: %s" % image_file)
 
 # Create or read existing USB mapping
@@ -304,8 +314,7 @@ while True:
 	all_usbs = enum_usbs()
 
 	# Show number of usb devices
-	winsize = screen.getmaxyx()
-	screen.addstr(0, winsize[1]-4, "% 3d" % len(all_usbs))
+	update_corner("USBs: % 3d" % len(all_usbs))
 
 	screen.move(2,1)
 	screen.clrtobot()
