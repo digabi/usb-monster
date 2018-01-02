@@ -82,14 +82,9 @@ def enum_usbs ():
 	usb_re = re.compile('usb')
 
 	for this_blockdr in os.listdir('/sys/block/'):
-		check_path = "/sys/block/%s/device" % this_blockdr
-		try:
-			blockdr_readlink_tuplet = subprocess.Popen(shlex.split("readlink -f %s" % check_path), stdout=subprocess.PIPE).communicate()
-			blockdr_readlink = str(blockdr_readlink_tuplet[0]).rstrip()
-		except:
-			blockdr_readlink = None
+		check_path = os.path.realpath("/sys/block/%s/device" % this_blockdr)
 
-		if blockdr_readlink != None and usb_re.search(blockdr_readlink):
+		if check_path != None and usb_re.search(check_path):
 			blockdr_devpath = "/dev/"+this_blockdr
 			if not is_mounted(blockdr_devpath):
 				usbs.append(blockdr_devpath)
