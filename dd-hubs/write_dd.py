@@ -256,6 +256,10 @@ def writer_loop (my_screen, usb_mapper, image_file):
 			# Create writers for all USB devices
 			usbcoords = usb_mapper.get_hub_coords_str(upm.get_usb_path(this_usb))
 			my_log("Creating writer for device %s located at %s (%s)" % (this_usb, usbcoords, upm.get_usb_path(this_usb)))
+			
+			if not os.access(this_usb, os.W_OK):
+				my_exit(1, "You don't have write access to %s. Are you sure you are root?" % this_usb)
+
 			writers[this_usb] = dd_helper()
 			writers[this_usb].set_usbhub_coords(usbcoords)
 			writers[this_usb].write_image(image_file, this_usb)
