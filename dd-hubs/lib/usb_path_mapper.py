@@ -12,7 +12,11 @@ class usb_path_mapper (object):
         if device in self.cache:
             return self.cache[device]
 
-        dev_files = os.listdir("/dev/disk/by-path/")
+        try:
+            dev_files = os.listdir("/dev/disk/by-path/")
+        except OSError:
+            dev_files = []
+
         for this_file in dev_files:
             if os.path.realpath("/dev/disk/by-path/%s" % this_file) == device:
                 re_devids = re.search(r'pci-\d+:([a-f0-9]+):.+usb-\d+:([\.\d]+):', this_file)
