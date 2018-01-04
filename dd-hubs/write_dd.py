@@ -126,6 +126,9 @@ def get_new_mapping (my_screen):
 	hubs = int(get_input(my_screen, "Number of USB hubs in your setting:"))
 	ports = int(get_input(my_screen, "Number of USB ports in each USB hub:"))
 
+	# Create new USB path mapper object to resolve device paths to USB paths
+	upm = usb_path_mapper()
+
 	new_mapping = []
 
 	# Key input to non-blocking mode
@@ -161,8 +164,8 @@ def get_new_mapping (my_screen):
 						time.sleep(0.5)
 				elif len(added_usbs) == 1:
 					# We have one USB added
-					new_mapping.append([this_hub, this_port, get_usb_path(added_usbs[0])])
-					my_log("New mapping: %d:%d %s" % (this_hub, this_port, get_usb_path(added_usbs[0])))
+					new_mapping.append([this_hub, this_port, upm.get_usb_path(added_usbs[0])])
+					my_log("New mapping: %d:%d %s" % (this_hub, this_port, upm.get_usb_path(added_usbs[0])))
 					current_usbs = new_usbs
 					still_loop = False
 				else:
