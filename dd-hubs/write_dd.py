@@ -115,7 +115,7 @@ def get_new_mapping (my_screen):
 
 	while usbs_present:
 		current_usbs = enum_usbs()
-		update_corner("USBs: % 3d" % len(current_usbs))
+		update_corner(my_screen, "USBs: % 3d" % len(current_usbs))
 		if len(current_usbs) > 0:
 			update_message(my_screen, "To start USB mapping process please remove all USB sticks!")
 			time.sleep(1)
