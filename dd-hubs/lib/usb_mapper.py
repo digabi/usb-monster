@@ -81,8 +81,6 @@ class usb_mapper (object):
         if self.current_mapping == None:
             self.current_mapping = {}
 
-        mapstr = "%d-%d" % (host, port)
-
         self.current_mapping[self.encode_mapstr(host, port)] = usbaddr
 
     def set_config (self, new_config):
