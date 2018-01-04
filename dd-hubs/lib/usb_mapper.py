@@ -66,6 +66,21 @@ class usb_mapper (object):
         f.write(json.dumps(config))
         f.close()
 
+    def get_max (self):
+        max_hubs = 0
+        max_ports = 0
+
+        for this_mapstr in self.current_mapping.iterkeys():
+            coords = self.decode_mapstr(this_mapstr)
+
+            if coords[0] > max_hubs:
+                max_hubs = coords[0]
+
+            if coords[1] > max_ports:
+                max_ports = coords[1]
+
+        return [max_hubs, max_ports]
+
     def mapping_clear (self):
         self.current_mapping = None
 
@@ -107,3 +122,7 @@ class usb_mapper (object):
             return "Unknown"
 
         return "%d : %d" % (hub_coords[0], hub_coords[1])
+
+    def get_usbaddr (self, host, port):
+        mapstr = self.encode_mapstr(host, port)
+        return self.current_mapping[mapstr]

@@ -175,56 +175,52 @@ def get_new_mapping (my_screen):
 
 	return new_mapping
 
-def update_writer_status (screen, my_writers, current_usbs = None):
+def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 	# Returns array of removed devices
 	writer_count = 0
-	still_working_count = 0
 
 	removed_devices = []
-	writer_ids = []
-	for this_device in my_writers.iterkeys():
-		item = (this_device, my_writers[this_device].get_usbhub_coords())
-		writer_ids.append(item)
 
 	screen.addstr(2, 0, "")
 
-	for this_device_tuple in sorted(writer_ids, key=lambda device: device[1]):
-		this_device = this_device_tuple[0]
-		this_usb_connector = this_device_tuple[1]
-		this_writer = my_writers[this_device]
+	for this_hub in range(1,max_coords[0]+1):
+		for this_port in range(1,max_coords[1]+1):
+			# Get screen coordinates for status row
+			writer_count += 1
+			writer_coords = get_writer_status_coords(writer_count)
 
-		status = this_writer.update_write_status()
+			coord_str = "%d : %d" % (this_hub, this_port)
 
-		writer_count += 1
+			screen.addstr(writer_coords['y'], writer_coords['x']+COL_USBID, coord_str)
+			screen.clrtoeol()
 
-		# Get coordinates for status row
-		writer_coords = get_writer_status_coords(writer_count)
+			for this_device in my_writers.iterkeys():
+				this_writer = my_writers[this_device]
+				if this_writer.get_usbhub_coords() == coord_str:
+					# this_writer is at this_hub:this_port (coord_str)
+					status = this_writer.update_write_status()
 
-		screen.addstr(writer_coords['y'], writer_coords['x']+COL_USBID, this_usb_connector)
-		screen.clrtoeol()
-		screen.addstr(writer_coords['y'], writer_coords['x']+COL_DEVPATH, this_device)
-		screen.clrtoeol()
-		screen.addstr(writer_coords['y'], writer_coords['x']+COL_STATUS, this_writer.update_write_status_str(status))
-		screen.clrtoeol()
+					screen.addstr(writer_coords['y'], writer_coords['x']+COL_DEVPATH, this_device)
+					screen.clrtoeol()
+					screen.addstr(writer_coords['y'], writer_coords['x']+COL_STATUS, this_writer.update_write_status_str(status))
+					screen.clrtoeol()
 
-		if status == 1 or status == 2:
-			# Now writing (1) or verifying (2)
-			still_working_count += 1
+					if status == 1 or status == 2:
+						# Now writing (1) or verifying (2)
+						status_line = this_writer.get_dd_status()
+						if status_line != None:
+							screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, status_line)
+					elif status == 3 or status == 4 or status == 5:
+						# Write finished as ok (3), error (4) or verify error (5)
 
-			status_line = this_writer.get_dd_status()
-			if status_line != None:
-				screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, status_line)
-		elif status == 3 or status == 4 or status == 5:
-			# Write finished as ok (3), error (4) or verify error (5)
+						if current_usbs != None:
+							if this_device in current_usbs:
+								device_present = "PRESENT"
+							else:
+								device_present = "-"
+								removed_devices.append({'device': this_device, 'status': status})
 
-			if current_usbs != None:
-				if this_device in current_usbs:
-					device_present = "PRESENT"
-				else:
-					device_present = "-"
-					removed_devices.append({'device': this_device, 'status': status})
-
-				screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present)
+							screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present)
 
 	screen.clrtobot()
 
@@ -271,7 +267,7 @@ def writer_loop (my_screen, usb_mapper, image_file):
 			continue_writers = False
 
 		# Check status
-		removed_devices = update_writer_status(my_screen, writers, new_usbs)
+		removed_devices = update_writer_status(my_screen, writers, usb_mapper.get_max(), new_usbs)
 
 		for this_removed_device in removed_devices:
 			upm.changed(this_removed_device['device'])
