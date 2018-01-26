@@ -22,6 +22,10 @@ any mounted filesystems.
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
 
+Alternative:
+
+`write_dd_start.sh` is bash script which first asks the image path with `zenity` and then executes `write_dd.py`.
+
 ## Requirements
 
 dd, pv, md5sum, head, python 2.7, readlink.
