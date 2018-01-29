@@ -1,5 +1,15 @@
 #!/bin/bash
 
+# Turn DPMS off, try different approaches
+XSET=`which xset`
+if [ -x $XSET ]; then
+	# We have xset
+	$XSET -dpms
+	$XSET dpms 0 0 0
+else
+	echo "Could not find xset, unable to turn DPMS off"
+fi
+
 # Determine path to write_dd.py
 if [ -L $0 ]; then
 	echo "is symlink"
@@ -21,4 +31,3 @@ if [ "$return_code" == "0" ]; then
 else
 	echo "Cancelled..."
 fi
-
