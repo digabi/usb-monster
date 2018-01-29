@@ -164,8 +164,10 @@ def get_new_mapping (my_screen):
 						time.sleep(0.5)
 				elif len(added_usbs) == 1:
 					# We have one USB added
+					curses.flash()
 					new_mapping.append([this_hub, this_port, upm.get_usb_path(added_usbs[0])])
 					my_log("New mapping: %d:%d %s" % (this_hub, this_port, upm.get_usb_path(added_usbs[0])))
+					curses.flash()
 					current_usbs = new_usbs
 					still_loop = False
 				else:
@@ -256,7 +258,7 @@ def writer_loop (my_screen, usb_mapper, image_file):
 			# Create writers for all USB devices
 			usbcoords = usb_mapper.get_hub_coords_str(upm.get_usb_path(this_usb))
 			my_log("Creating writer for device %s located at %s (%s)" % (this_usb, usbcoords, upm.get_usb_path(this_usb)))
-			
+
 			if not os.access(this_usb, os.W_OK):
 				my_exit(1, "You don't have write access to %s. Are you sure you are root?" % this_usb)
 
