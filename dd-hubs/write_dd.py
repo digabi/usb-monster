@@ -135,8 +135,8 @@ def get_new_mapping (my_screen):
 	my_screen.timeout(0)
 	curses.noecho()
 
-	for this_hub in range(1,hubs+1):
-		for this_port in range(1,ports+1):
+	for this_port in range(1,ports+1):
+		for this_hub in range(1,hubs+1):
 			update_message(my_screen, "Insert USB to hub %d, port %d - SPACE: skip this, S: skip mapping, X: exit" % (this_hub, this_port))
 
 			still_loop = True
