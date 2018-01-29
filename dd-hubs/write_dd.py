@@ -11,6 +11,7 @@ if cmd_subfolder not in sys.path:
 
 from dd_helper import dd_helper
 from usb_mapper import usb_mapper
+from write_counter import write_counter
 from usb_path_mapper import usb_path_mapper
 
 COL_USBID = 1
@@ -222,7 +223,10 @@ def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 								device_present = "-"
 								removed_devices.append({'device': this_device, 'status': status})
 
-							screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present)
+							if status == 3:
+								screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present, curses.color_pair(1))
+							else:
+								screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present, curses.color_pair(2))
 
 	screen.clrtobot()
 
@@ -230,7 +234,7 @@ def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 
 	return removed_devices
 
-def writer_loop (my_screen, usb_mapper, image_file):
+def writer_loop (my_screen, usb_mapper, write_counter, image_file):
 	# Main writer loop - write USB memory sticks until stopped by pressing X
 
 	# Create new USB path mapper object to resolve device paths to USB paths
@@ -244,6 +248,8 @@ def writer_loop (my_screen, usb_mapper, image_file):
 	current_usbs = []
 	curses.noecho()
 	my_screen.timeout(0)
+
+	screen.addstr(0, 0, "Image file: %s   %d" % (image_file, write_counter.read_counter(image_file)), curses.color_pair(3))
 
 	update_message(my_screen, "Insert USB sticks to start write and remove them when finished, X to exit...")
 
@@ -281,6 +287,8 @@ def writer_loop (my_screen, usb_mapper, image_file):
 			my_log("Removed %s with status %d" % (this_removed_device['device'], this_removed_device['status']))
 			if this_removed_device['status'] == 3:
 				play_file(AUDIO_OK)
+				write_counter.add_counter_by_one(image_file)
+				screen.addstr(0, 0, "Image file: %s   %d" % (image_file, write_counter.read_counter(image_file)), curses.color_pair(3))
 			else:
 				play_file(AUDIO_ERROR)
 				curses.flash()
@@ -312,7 +320,12 @@ my_log("Started")
 
 screen = curses.initscr()
 screen.clear()
+
+curses.start_color()
 curses.echo()
+curses.init_pair(1, curses.COLOR_GREEN, curses.COLOR_BLACK)
+curses.init_pair(2, curses.COLOR_RED, curses.COLOR_BLACK)
+curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK)
 
 # Check parameter
 try:
@@ -323,7 +336,6 @@ except:
 if not is_readable(image_file):
 	my_exit(1, "File %s is not readable")
 
-screen.addstr(0, 0, "Image file: %s" % image_file, curses.A_DIM)
 my_log("Image file: %s" % image_file)
 
 # Create or read existing USB mapping
@@ -336,8 +348,11 @@ else:
 	usb_mapper.set_config(get_new_mapping(screen))
 	usb_mapper.write_config()
 
+# Create counter
+write_counter = write_counter(SETTINGS_PATH)
+
 # Do writing
-writer_loop(screen, usb_mapper, image_file)
+writer_loop(screen, usb_mapper, write_counter, image_file)
 
 screen.nodelay(0)
 
