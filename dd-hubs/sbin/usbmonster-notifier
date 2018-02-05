@@ -1,0 +1,15 @@
+#!/bin/sh
+
+mytemp ()
+{
+  mktemp --suffix=.usbmonster
+}
+
+if [ "$ACTION" = "add" ]; then
+  echo "add $DEVNAME" >>`mytemp`
+elif [ "$ACTION" = "change" ]; then
+  echo "add $DEVNAME" >>`mytemp`
+  echo "remove $DEVNAME" >>`mytemp`
+elif [ "$ACTION" = "remove" ]; then
+  echo "remove $DEVNAME" >>`mytemp`
+fi

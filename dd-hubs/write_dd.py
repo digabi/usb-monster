@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
-import curses, re, sys, os, time, shlex, subprocess, inspect, json
+import curses, re, sys, os, time, shlex, subprocess, inspect, json, glob, stat
 from os.path import expanduser
 
 # Add subfolder "lib" to modules path
@@ -76,6 +76,12 @@ def is_mounted (path):
 
 	return False
 
+def is_blkdev (path):
+	try:
+		return stat.S_ISBLK(os.stat(path).st_mode)
+	except:
+ 		return False
+
 def enum_usbs ():
 	# Return array of non-mounted usb devices
 	usbs = []
@@ -91,6 +97,28 @@ def enum_usbs ():
 				usbs.append(blockdr_devpath)
 
 	return usbs
+
+def enum_whatever_usbs (action):
+	usbs = []
+
+	unprocessed_files = glob.glob("/tmp/*.usbmonster")
+	for this_file in unprocessed_files:
+		with open(this_file) as f:
+			line = f.read()
+			m = re.search('^'+action+' (.+)$', line)
+			if m:
+				usbs.append(m.group(1))
+				os.remove(this_file)
+
+	return usbs
+
+def enum_new_usbs ():
+	# Return array of new non-mounted USB devices
+	return enum_whatever_usbs('add')
+
+def enum_removed_usbs ():
+	# Return array of remove USB devices
+	return enum_whatever_usbs('remove')
 
 def get_window_size_xy ():
 	# Get screen size
@@ -136,6 +164,9 @@ def get_new_mapping (my_screen):
 	my_screen.timeout(0)
 	curses.noecho()
 
+	# Flush inserted sticks
+	enum_new_usbs()
+
 	for this_port in range(1,ports+1):
 		for this_hub in range(1,hubs+1):
 			update_message(my_screen, "Insert USB to hub %d, port %d - SPACE: skip this, S: skip mapping, X: exit" % (this_hub, this_port))
@@ -143,8 +174,7 @@ def get_new_mapping (my_screen):
 			still_loop = True
 
 			while still_loop:
-				new_usbs = enum_usbs()
-				added_usbs = list(set(new_usbs) - set(current_usbs))
+				added_usbs = enum_new_usbs()
 
 				if len(added_usbs) == 0:
 					# Check for space bar
@@ -169,7 +199,6 @@ def get_new_mapping (my_screen):
 					new_mapping.append([this_hub, this_port, upm.get_usb_path(added_usbs[0])])
 					my_log("New mapping: %d:%d %s" % (this_hub, this_port, upm.get_usb_path(added_usbs[0])))
 					curses.flash()
-					current_usbs = new_usbs
 					still_loop = False
 				else:
 					update_message(my_screen, "Please insert only one USB at a time!")
@@ -182,7 +211,13 @@ def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 	# Returns array of removed devices
 	writer_count = 0
 
-	removed_devices = []
+	removed_devices = enum_removed_usbs()
+	removed_devices_return = {}
+
+	# By default mark all removed devices with exit code 4 (error)
+	for this_removed_device in removed_devices:
+		my_log("Flushed removed device: %s" % this_removed_device)
+		removed_devices_return[this_removed_device] = 4
 
 	screen.addstr(2, 0, "")
 
@@ -217,11 +252,11 @@ def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 						# Write finished as ok (3), error (4) or verify error (5)
 
 						if current_usbs != None:
-							if this_device in current_usbs:
+							if is_blkdev(this_device):
 								device_present = "PRESENT"
 							else:
 								device_present = "-"
-								removed_devices.append({'device': this_device, 'status': status})
+								removed_devices_return[this_device] = status
 
 							if status == 3:
 								screen.addstr(writer_coords['y'], writer_coords['x']+COL_WRITE, device_present, curses.color_pair(1))
@@ -232,7 +267,7 @@ def update_writer_status (screen, my_writers, max_coords, current_usbs = None):
 
 	screen.refresh()
 
-	return removed_devices
+	return removed_devices_return
 
 def writer_loop (my_screen, usb_mapper, write_counter, image_file):
 	# Main writer loop - write USB memory sticks until stopped by pressing X
@@ -253,11 +288,16 @@ def writer_loop (my_screen, usb_mapper, write_counter, image_file):
 
 	update_message(my_screen, "Insert USB sticks to start write and remove them when finished, X to exit...")
 
+	# Flush removed USB sticks
+	enum_removed_usbs()
+
 	continue_writers = True
+	all_usbs = []
 	while continue_writers:
-		new_usbs = enum_usbs()
-		update_corner(my_screen, "USBs: % 3d" % len(new_usbs))
-		added_usbs = list(set(new_usbs) - set(current_usbs))
+		added_usbs = enum_new_usbs()
+		all_usbs = all_usbs+added_usbs
+
+		update_corner(my_screen, "USBs: % 3d" % len(all_usbs))
 
 		# Create writers for all newly added USB sticks
 		for this_usb in added_usbs:
@@ -272,20 +312,21 @@ def writer_loop (my_screen, usb_mapper, write_counter, image_file):
 			writers[this_usb].set_usbhub_coords(usbcoords)
 			writers[this_usb].write_image(image_file, this_usb)
 
-		current_usbs = new_usbs
-
 		key = screen.getch()
 		if key == ord('x') or key == ord('X'):
 			continue_writers = False
 
 		# Check status
-		removed_devices = update_writer_status(my_screen, writers, usb_mapper.get_max(), new_usbs)
+		removed_devices = update_writer_status(my_screen, writers, usb_mapper.get_max(), all_usbs)
 
-		for this_removed_device in removed_devices:
-			upm.changed(this_removed_device['device'])
-			del writers[this_removed_device['device']]
-			my_log("Removed %s with status %d" % (this_removed_device['device'], this_removed_device['status']))
-			if this_removed_device['status'] == 3:
+		for this_removed_device in removed_devices.iterkeys():
+			upm.changed(this_removed_device)
+			if this_removed_device in writers:
+				del writers[this_removed_device]
+			if this_removed_device in all_usbs:
+				all_usbs.remove(this_removed_device)
+			my_log("Removed %s with status %d" % (this_removed_device, removed_devices[this_removed_device]))
+			if removed_devices[this_removed_device] == 3:
 				play_file(AUDIO_OK)
 				write_counter.add_counter_by_one(image_file)
 				screen.addstr(0, 0, "Image file: %s   %d" % (image_file, write_counter.read_counter(image_file)), curses.color_pair(3))
