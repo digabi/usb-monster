@@ -140,6 +140,9 @@ def get_writer_status_coords (writer_n):
 def get_new_mapping (my_screen):
 	# Make sure there are no USBs present
 
+	# Create a USB mapper just to use decode
+	um = usb_mapper("")
+
 	usbs_present = True
 
 	while usbs_present:
@@ -162,46 +165,71 @@ def get_new_mapping (my_screen):
 
 	# Key input to non-blocking mode
 	my_screen.timeout(0)
-	curses.noecho()
 
 	# Flush inserted sticks
 	enum_new_usbs()
 
-	for this_port in range(1,ports+1):
-		for this_hub in range(1,hubs+1):
-			update_message(my_screen, "Insert USB to hub %d, port %d - SPACE: skip this, S: skip mapping, X: exit" % (this_hub, this_port))
+	still_loop = True
 
-			still_loop = True
+	next_hub = 1
+	next_port = 1
 
-			while still_loop:
-				added_usbs = enum_new_usbs()
+	#curses.noecho()
 
-				if len(added_usbs) == 0:
-					# Check for space bar
-					key = my_screen.getch()
-					if key == ord(' '):
-						my_log("Skipped mapping: %d:%d" % (this_hub, this_port))
-						still_loop = False
-						update_message(my_screen, "Skipping hub %d, port %d..." % (this_hub, this_port))
-						time.sleep(2)
-					elif key == ord('x') or key == ord('X'):
-						my_exit(0, "User terminated while creating USB mapping")
-					elif key == ord('s') or key == ord('S'):
-						update_message(my_screen, "Skipping USB mapping, using an empty map")
-						time.sleep(2)
-						my_log("User skipped USB mapping, returns an empty map")
-						return []
-					else:
-						time.sleep(0.5)
-				elif len(added_usbs) == 1:
-					# We have one USB added
-					curses.flash()
-					new_mapping.append([this_hub, this_port, upm.get_usb_path(added_usbs[0])])
-					my_log("New mapping: %d:%d %s" % (this_hub, this_port, upm.get_usb_path(added_usbs[0])))
-					curses.flash()
-					still_loop = False
-				else:
-					update_message(my_screen, "Please insert only one USB at a time!")
+	while still_loop:
+		update_message(my_screen, "Insert USB to hub %d, port %d - C: continue, X: exit" % (next_hub, next_port))
+
+		added_usbs = enum_new_usbs()
+
+		key = my_screen.getch()
+
+		if len(added_usbs) == 0:
+			# Check for space bar
+			if key == ord('x') or key == ord('X'):
+				my_exit(0, "User terminated while creating USB mapping")
+			elif key == ord('c') or key == ord('C'):
+				still_loop = False
+			else:
+				time.sleep(0.5)
+		elif len(added_usbs) == 1:
+			# We have one USB added
+			curses.flash()
+
+			curses.echo()
+			my_screen.timeout(-1)
+			new_addr = get_input(my_screen, "Confirm location (%d-%d) or enter new:" % (next_hub, next_port))
+			curses.noecho()
+			my_screen.timeout(0)
+
+			if new_addr == "":
+				new_addr = "%d-%d" % (next_hub, next_port)
+
+			my_log("User set %s to %s (default %d-%d)" % (added_usbs[0], new_addr, next_hub, next_port))
+
+			new_addr_arr = um.decode_mapstr(new_addr)
+			this_hub = new_addr_arr[0]
+			this_port = new_addr_arr[1]
+
+			new_mapping.append([this_hub, this_port, upm.get_usb_path(added_usbs[0])])
+			my_log("New mapping: %d-%d %s" % (this_hub, this_port, upm.get_usb_path(added_usbs[0])))
+			curses.flash()
+
+			update_corner(my_screen, "USBs: % 3d" % len(new_mapping))
+
+			# Write entry to screen
+			line_number = (this_hub-1)*ports + this_port
+			coords = get_writer_status_coords(line_number)
+
+			my_screen.addstr(coords['y'], coords['x']+COL_USBID, "%d-%d: %s" % (this_hub, this_port, added_usbs[0]))
+
+			next_hub = this_hub+1
+			if (next_hub > hubs):
+				next_port = this_port+1
+			if (next_port > ports):
+				next_port = 1
+				next_hub = 1
+		else:
+			update_message(my_screen, "Please insert only one USB at a time!")
 
 	curses.echo()
 
@@ -352,7 +380,7 @@ def get_input (screen, new_message):
 	screen.clrtoeol()
 	screen.refresh()
 
-	str_input = screen.getstr(1, len(new_message)+2, 10)
+	str_input = screen.getstr(1, len(new_message)+2)
 
 	return str_input
 
@@ -380,20 +408,20 @@ if not is_readable(image_file):
 my_log("Image file: %s" % image_file)
 
 # Create or read existing USB mapping
-usb_mapper = usb_mapper(SETTINGS_PATH)
-if usb_mapper.if_config():
+usb_mapper_obj = usb_mapper(SETTINGS_PATH)
+if usb_mapper_obj.if_config():
 	my_log("Using old USB mapper data")
 else:
 	# Create new config for USB mapper
 	my_log("Creating new USB mapper data")
-	usb_mapper.set_config(get_new_mapping(screen))
-	usb_mapper.write_config()
+	usb_mapper_obj.set_config(get_new_mapping(screen))
+	usb_mapper_obj.write_config()
 
 # Create counter
 write_counter = write_counter(SETTINGS_PATH)
 
 # Do writing
-writer_loop(screen, usb_mapper, write_counter, image_file)
+writer_loop(screen, usb_mapper_obj, write_counter, image_file)
 
 screen.nodelay(0)
 

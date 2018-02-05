@@ -6,11 +6,12 @@
 import os, errno, json, re
 
 class usb_mapper (object):
-    def __init__ (self, config_path):
+    def __init__ (self, config_path = None):
         self.config_path = config_path
         self.current_mapping = None
 
-        self.read_config()
+        if (self.config_path != None):
+            self.read_config()
 
     def mkdir_p(self, path):
         try:
