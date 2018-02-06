@@ -137,6 +137,41 @@ def get_writer_status_coords (writer_n):
 
 	return { 'x': column * col_width, 'y': row+2 }
 
+def refresh_mapping (my_screen, mapping, ports_in_hub):
+	# Redraw mapping, called by get_new_mapping whenever mapping has changed
+
+	# Clean mapping area
+	my_screen.addstr(3, 0, "")
+	my_screen.clrtobot()
+
+	for this_mapping in mapping:
+			this_hub = this_mapping[0]
+			this_port = this_mapping[1]
+			this_device = this_mapping[2]
+
+			line_number = (this_hub-1)*ports_in_hub + this_port
+			coords = get_writer_status_coords(line_number)
+
+			my_screen.addstr(coords['y'], coords['x']+COL_USBID, "%d-%d: %s" % (this_hub, this_port, this_device))
+
+def delete_from_mapping (my_screen, old_mapping):
+	# Create a USB mapper just to use decode
+	um = usb_mapper("")
+
+	deladdr = get_input(my_screen, "Enter USB mapping to delete (hub-port): ")
+
+	deladdr_arr = um.decode_mapstr(deladdr)
+	del_hub = deladdr_arr[0]
+	del_port = deladdr_arr[1]
+
+	new_mapping = []
+
+	for this_mapping in old_mapping:
+		if this_mapping[0] != del_hub or this_mapping[1] != del_port:
+			new_mapping.append(this_mapping)
+
+	return new_mapping
+
 def get_new_mapping (my_screen):
 	# Make sure there are no USBs present
 
@@ -154,7 +189,6 @@ def get_new_mapping (my_screen):
 		else:
 			usbs_present = False
 
-	curses.echo()
 	hubs = int(get_input(my_screen, "Number of USB hubs in your setting:"))
 	ports = int(get_input(my_screen, "Number of USB ports in each USB hub:"))
 
@@ -162,9 +196,6 @@ def get_new_mapping (my_screen):
 	upm = usb_path_mapper()
 
 	new_mapping = []
-
-	# Key input to non-blocking mode
-	my_screen.timeout(0)
 
 	# Flush inserted sticks
 	enum_new_usbs()
@@ -174,10 +205,8 @@ def get_new_mapping (my_screen):
 	next_hub = 1
 	next_port = 1
 
-	#curses.noecho()
-
 	while still_loop:
-		update_message(my_screen, "Insert USB to hub %d, port %d - C: continue, X: exit" % (next_hub, next_port))
+		update_message(my_screen, "Insert USB to hub %d, port %d - D: delete, C: continue, X: exit" % (next_hub, next_port))
 
 		added_usbs = enum_new_usbs()
 
@@ -187,6 +216,9 @@ def get_new_mapping (my_screen):
 			# Check for space bar
 			if key == ord('x') or key == ord('X'):
 				my_exit(0, "User terminated while creating USB mapping")
+			elif key == ord('d') or key == ord('D'):
+				new_mapping = delete_from_mapping(my_screen, new_mapping)
+				refresh_mapping(my_screen, new_mapping, ports)
 			elif key == ord('c') or key == ord('C'):
 				still_loop = False
 			else:
@@ -195,11 +227,7 @@ def get_new_mapping (my_screen):
 			# We have one USB added
 			curses.flash()
 
-			curses.echo()
-			my_screen.timeout(-1)
 			new_addr = get_input(my_screen, "Confirm location (%d-%d) or enter new:" % (next_hub, next_port))
-			curses.noecho()
-			my_screen.timeout(0)
 
 			if new_addr == "":
 				new_addr = "%d-%d" % (next_hub, next_port)
@@ -217,10 +245,7 @@ def get_new_mapping (my_screen):
 			update_corner(my_screen, "USBs: % 3d" % len(new_mapping))
 
 			# Write entry to screen
-			line_number = (this_hub-1)*ports + this_port
-			coords = get_writer_status_coords(line_number)
-
-			my_screen.addstr(coords['y'], coords['x']+COL_USBID, "%d-%d: %s" % (this_hub, this_port, added_usbs[0]))
+			refresh_mapping(my_screen, new_mapping, ports)
 
 			next_hub = this_hub+1
 			if (next_hub > hubs):
@@ -381,7 +406,11 @@ def get_input (screen, new_message):
 	screen.clrtoeol()
 	screen.refresh()
 
+	curses.echo()
+	screen.timeout(-1)
 	str_input = screen.getstr(1, len(new_message)+2)
+	curses.noecho()
+	screen.timeout(0)
 
 	return str_input
 
@@ -390,6 +419,8 @@ my_log("Started")
 
 screen = curses.initscr()
 screen.clear()
+# Key input to non-blocking mode
+screen.timeout(0)
 
 curses.start_color()
 curses.echo()
