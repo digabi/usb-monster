@@ -225,6 +225,7 @@ def get_new_mapping (my_screen):
 			next_hub = this_hub+1
 			if (next_hub > hubs):
 				next_port = this_port+1
+				next_hub = 1
 			if (next_port > ports):
 				next_port = 1
 				next_hub = 1
