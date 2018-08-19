@@ -15,16 +15,16 @@ any mounted filesystems.
  3. If the failing device(s) is reported
     after the writing process. Removing sticks one by one tells you when you have removed a failed device
     as the device path is removed from the list if (failed) devices.
- 
+
 ## Requirements
 
-dd, md5sum, head, python 2.7, readlink.
+dd, md5sum, head, python 2.7, readlink, python `psutil`
 
 Must be executed as superuser.
 
 Required packages:
- * Arch Linux: alsa-utils, pv, python2
- * Debian Jessie: coreutils, alsa-utils, pv, python2.7-minimal
+ * Arch Linux: alsa-utils, pv, python2, python2-psutil
+ * Debian Jessie: coreutils, alsa-utils, pv, python2.7-minimal, python-psutil
 
 ## Documentation specific to MEB copyers
 
@@ -32,4 +32,3 @@ Required packages:
 
  * Mapping between USB IDs and hubs/ports (xlsx file)
  * Connecting USB hubs to copying workstations in a way that the mapping is valid (pptx file)
- 
