@@ -8,7 +8,7 @@ class dd_writer (object):
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)']
 		self.RE_OUTPUT = { 'megs': '([\d,]+..?)', 'eta': 'ETA (\d+\:\d+\:\d+)', 'speed': '\[([\d,]+..?\/s)', 'percent': '(\d+)%', 'md5sum': '^([0-9a-f]+) ' }
 		# Write timeout in seconds to cause status "timeout"
-		self.TIMEOUT = 10
+		self.TIMEOUT = 20
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
 		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
