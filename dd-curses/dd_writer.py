@@ -6,7 +6,7 @@ class dd_writer (object):
 	def __init__ (self):
 		self.DD_BLOCK_SIZE="10240"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
-		self.RE_OUTPUT = { 'bytes_written': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
+		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
 		# Raise "slow" flag if average speed bytes/second is less than this
@@ -30,9 +30,9 @@ class dd_writer (object):
 		self.timeout_lastchange = None
 		self.timeout_last_write_count = None
 
-		self.slow_write_started = None
-		self.slow_write_byteswritten = None
-		self.slow_write_byteswritten_timestamp = None
+		self.slow_transfer_started = None
+		self.slow_bytestransferred = None
+		self.slow_bytestransferred_timestamp = None
 
 		self.MD5EXT = '.md5'
 
@@ -136,7 +136,7 @@ class dd_writer (object):
 		return False
 
 	def if_slow (self):
-		avg_speed = self.get_write_speed()
+		avg_speed = self.get_transfer_speed()
 		if (avg_speed > 0) and (avg_speed < self.SLOW):
 			return True
 
@@ -183,38 +183,38 @@ class dd_writer (object):
 
 		data = self.extract_dd_data(stderr_line)
 
-		if (data['bytes_written'] != ""):
+		if (data['bytes_transferred'] != ""):
 			try:
-				int_bytes_written = int(data['bytes_written'])
+				int_bytes_transferred= int(data['bytes_transferred'])
 			except:
-				int_bytes_written = 0
+				int_bytes_transferred = 0
 
-			avg_speed = self.get_write_speed(int_bytes_written)
-			perc_done = self.get_write_percent()
+			avg_speed = self.get_transfer_speed(int_bytes_transferred)
+			perc_done = self.get_transfer_percent()
 
-			str_bytes_written = self.sizeof_fmt(int_bytes_written)
+			str_bytes_transferred = self.sizeof_fmt(int_bytes_transferred)
 			str_avg_speed = self.sizeof_fmt(avg_speed)
 
-			self.dd_previous_status = "%s (%5.1f%%) %s/s" % (str_bytes_written.rjust(9), perc_done, str_avg_speed.rjust(8))
+			self.dd_previous_status = "%s (%5.1f%%) %s/s" % (str_bytes_transferred.rjust(9), perc_done, str_avg_speed.rjust(8))
 
 		return self.dd_previous_status
 
-	def set_bytes_written(self, bytes_written = None):
-		if bytes_written != None:
-			if self.slow_write_started == None:
-				self.slow_write_started = time.time()
+	def set_bytes_transferred(self, bytes_transferred = None):
+		if bytes_transferred != None:
+			if (self.slow_transfer_started == None) or (bytes_transferred < self.slow_bytestransferred):
+				self.slow_transfer_started = time.time()
 
-			self.slow_write_byteswritten_timestamp = time.time()
-			self.slow_write_byteswritten = bytes_written
+			self.slow_bytestransferred_timestamp = time.time()
+			self.slow_bytestransferred = bytes_transferred
 
-	def get_write_speed(self, bytes_written = None):
-		self.set_bytes_written(bytes_written)
+	def get_transfer_speed(self, bytes_transferred = None):
+		self.set_bytes_transferred(bytes_transferred)
 
-		if (self.slow_write_started == None):
+		if (self.slow_transfer_started == None):
 			# We haven't been initialised yet, return zero
 			return 0
 
-		secs_passed = self.slow_write_byteswritten_timestamp - self.slow_write_started
+		secs_passed = self.slow_bytestransferred_timestamp - self.slow_transfer_started
 		if (secs_passed < 5):
 			# Don't report avg speed too early, only after 5 seconds
 			return 0
@@ -223,19 +223,19 @@ class dd_writer (object):
 		avg_speed = 0
 
 		try:
-			avg_speed = self.slow_write_byteswritten / secs_passed
+			avg_speed = self.slow_bytestransferred / secs_passed
 		except ZeroDivisionError:
 			pass
 
 		return avg_speed
 
-	def get_write_percent(self, bytes_written = None):
-		self.set_bytes_written(bytes_written)
+	def get_transfer_percent(self, bytes_transferred = None):
+		self.set_bytes_transferred(bytes_transferred)
 
-		if (self.slow_write_byteswritten == None) or (self.dd_image_size == None):
+		if (self.slow_bytestransferred == None) or (self.dd_image_size == None):
 			return 0
 
-		return (self.slow_write_byteswritten / float(self.dd_image_size)) * 100.0
+		return (self.slow_bytestransferred / float(self.dd_image_size)) * 100.0
 
 	def update_write_status_str(self, status_code = None):
 		if status_code == None:
@@ -263,10 +263,12 @@ class dd_writer (object):
 		# Get image file size
 		self.set_image_size(file_path)
 
+		# Zero bytes processed
+		self.set_bytes_transferred(0)
+
 		self.dd_operation = "write"
 		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-
 
 	## Functions related to MD5 calculation
 
@@ -310,8 +312,11 @@ class dd_writer (object):
 			self.dd_image_md5 = self.calculate_md5(filename)
 			self.write_md5_file(filename, self.dd_image_md5)
 
+		# Zero bytes processed
+		self.set_bytes_transferred(0)
+
 		self.dd_operation = "verify"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -f -s %d | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size, self.dd_image_size) ]
+		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -n -b | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Miscellaneous helpers
