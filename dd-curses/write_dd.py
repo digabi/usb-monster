@@ -135,14 +135,16 @@ def update_writer_status (my_writers, current_usbs = None):
 	writer_count = 0
 	still_working_count = 0
 	current_usbs_count = {
-		0: { 0:0, 1:0 },
-		1: { 0:0, 1:0 },
-		2: { 0:0, 1:0 },
-		3: { 0:0, 1:0 },
-		4: { 0:0, 1:0 },
-		5: { 0:0, 1:0 },
-		6: { 0:0, 1:0 },
-		7: { 0:0, 1:0 }
+		0: { 0:0, 1:0 }, # -
+		1: { 0:0, 1:0 }, # writing
+		2: { 0:0, 1:0 }, # verifying
+		3: { 0:0, 1:0 }, # finished
+		4: { 0:0, 1:0 }, # error
+		5: { 0:0, 1:0 }, # failed
+		6: { 0:0, 1:0 }, # timeout
+		7: { 0:0, 1:0 }, # (timeout) - resolved timeout
+		8: { 0:0, 1:0 }, # slow
+		9: { 0:0, 1:0 }  # (slow) - resolved slow
 	}
 
 	writer_ids = []

@@ -5,10 +5,12 @@ import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
 class dd_writer (object):
 	def __init__ (self):
 		self.DD_BLOCK_SIZE="10240"
-		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)']
-		self.RE_OUTPUT = { 'megs': '([\d,]+..?)', 'eta': 'ETA (\d+\:\d+\:\d+)', 'speed': '\[([\d,]+..?\/s)', 'percent': '(\d+)%', 'md5sum': '^([0-9a-f]+) ' }
+		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
+		self.RE_OUTPUT = { 'bytes_written': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
+		# Raise "slow" flag if average speed bytes/second is less than this
+		self.SLOW = 8*1024*1024 # 8 MiB/s
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
 		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
@@ -28,6 +30,10 @@ class dd_writer (object):
 		self.timeout_lastchange = None
 		self.timeout_last_write_count = None
 
+		self.slow_write_started = None
+		self.slow_write_byteswritten = None
+		self.slow_write_byteswritten_timestamp = None
+
 		self.MD5EXT = '.md5'
 
 	def update_write_status(self, write_count):
@@ -44,6 +50,16 @@ class dd_writer (object):
 		if self.status_code == 7:
 			return self.status_code
 
+		# If we are in slow mode check if device still exists
+		if self.status_code == 8:
+			if not self.device_present():
+				self.status_code = 9
+			return self.status_code
+
+		# Return "resolved slow" here
+		if self.status_code == 9:
+			return self.status_code
+
 		retcode = self.dd_handle.poll()
 
 		if retcode == None:
@@ -55,6 +71,10 @@ class dd_writer (object):
 					self.reset_device()
 					# Kill writer process
 					self.kill_dd()
+				elif self.if_slow():
+					self.status_code = 8
+					# Kill writer process
+					#self.kill_dd()
 				else:
 					self.status_code = 1
 			if self.dd_operation == "verify":
@@ -115,6 +135,14 @@ class dd_writer (object):
 		# We haven't reached the timeout
 		return False
 
+	def if_slow (self):
+		avg_speed = self.get_write_speed()
+		if (avg_speed > 0) and (avg_speed < self.SLOW):
+			return True
+
+		# This is not a slow device
+		return False
+
 	def non_block_read(self, output):
 		''' even in a thread, a normal read with block until the buffer is full '''
 		fd = output.fileno()
@@ -155,10 +183,56 @@ class dd_writer (object):
 
 		data = self.extract_dd_data(stderr_line)
 
-		if (data['megs'] != ""):
-			self.dd_previous_status = "%s (%s%%) ETA: %s Speed: %s" % (data['megs'], data['percent'], data['eta'], data['speed'])
+		if (data['bytes_written'] != ""):
+			try:
+				int_bytes_written = int(data['bytes_written'])
+			except:
+				int_bytes_written = 0
+
+			avg_speed = self.get_write_speed(int_bytes_written)
+			perc_done = self.get_write_percent()
+
+			self.dd_previous_status = "%s (%3.1f%%) Average: %s/s" % (self.sizeof_fmt(int_bytes_written), perc_done, self.sizeof_fmt(avg_speed))
 
 		return self.dd_previous_status
+
+	def set_bytes_written(self, bytes_written = None):
+		if bytes_written != None:
+			if self.slow_write_started == None:
+				self.slow_write_started = time.time()
+
+			self.slow_write_byteswritten_timestamp = time.time()
+			self.slow_write_byteswritten = bytes_written
+
+	def get_write_speed(self, bytes_written = None):
+		self.set_bytes_written(bytes_written)
+
+		if (self.slow_write_started == None):
+			# We haven't been initialised yet, return zero
+			return 0
+
+		secs_passed = self.slow_write_byteswritten_timestamp - self.slow_write_started
+		if (secs_passed < 5):
+			# Don't report avg speed too early, only after 5 seconds
+			return 0
+
+		# Calculate average speed
+		avg_speed = 0
+
+		try:
+			avg_speed = self.slow_write_byteswritten / secs_passed
+		except ZeroDivisionError:
+			pass
+
+		return avg_speed
+
+	def get_write_percent(self, bytes_written = None):
+		self.set_bytes_written(bytes_written)
+
+		if (self.slow_write_byteswritten == None) or (self.dd_image_size == None):
+			return 0
+
+		return (self.slow_write_byteswritten / float(self.dd_image_size)) * 100.0
 
 	def update_write_status_str(self, status_code = None):
 		if status_code == None:
@@ -187,7 +261,7 @@ class dd_writer (object):
 		self.set_image_size(file_path)
 
 		self.dd_operation = "write"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -f -s %d -B %s | dd of=%s bs=%s' % (file_path, self.DD_BLOCK_SIZE, self.dd_image_size, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
+		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 
@@ -265,3 +339,10 @@ class dd_writer (object):
 			text_file = open("/sys/block/%s/device/delete" % (device_file_short), "w")
 			text_file.write("1\n")
 			text_file.close()
+
+	def sizeof_fmt(self, num, suffix='B'):
+		for unit in ['','Ki','Mi','Gi','Ti','Pi','Ei','Zi']:
+			if abs(num) < 1024.0:
+				return "%3.1f%s%s" % (num, unit, suffix)
+			num /= 1024.0
+		return "%.1f%s%s" % (num, 'Yi', suffix)
