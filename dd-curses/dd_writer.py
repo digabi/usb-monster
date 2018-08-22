@@ -74,7 +74,7 @@ class dd_writer (object):
 				elif self.if_slow():
 					self.status_code = 8
 					# Kill writer process
-					#self.kill_dd()
+					self.kill_dd()
 				else:
 					self.status_code = 1
 			if self.dd_operation == "verify":
