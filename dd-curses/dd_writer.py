@@ -10,7 +10,7 @@ class dd_writer (object):
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
 		# Raise "slow" flag if average speed bytes/second is less than this
-		self.SLOW = 8*1024*1024 # 8 MiB/s
+		self.SLOW = 1*1024*1024 # 1 MiB/s
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
 		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
