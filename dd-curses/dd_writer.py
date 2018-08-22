@@ -192,7 +192,10 @@ class dd_writer (object):
 			avg_speed = self.get_write_speed(int_bytes_written)
 			perc_done = self.get_write_percent()
 
-			self.dd_previous_status = "%s (%3.1f%%) Average: %s/s" % (self.sizeof_fmt(int_bytes_written), perc_done, self.sizeof_fmt(avg_speed))
+			str_bytes_written = self.sizeof_fmt(int_bytes_written)
+			str_avg_speed = self.sizeof_fmt(avg_speed)
+
+			self.dd_previous_status = "%s (%5.1f%%) Average: %s/s" % (str_bytes_written.rjust(8), perc_done, str_avg_speed.rjust(8))
 
 		return self.dd_previous_status
 
