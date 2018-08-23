@@ -175,6 +175,8 @@ def update_writer_status (my_writers, current_usbs = None):
 		style_attribute = 0
 		if current_write_status_str == "timeout":
 			style_attribute = curses.A_STANDOUT
+		if current_write_status_str == "slow":
+			style_attribute = curses.A_STANDOUT
 
 		screen.addstr(writer_coords['y'], writer_coords['x']+COL_USBID, this_usb_path, style_attribute)
 		screen.clrtoeol()
