@@ -332,12 +332,22 @@ class dd_writer (object):
 
 	def kill_dd (self):
 		if (self.dd_handle != None):
-			dd_children = psutil.Process(self.dd_handle.pid).children()
+			try:
+				dd_children = psutil.Process(self.dd_handle.pid).children()
+			except:
+				dd_children = None
 
-			for this_child in dd_children:
-				this_child.terminate()
+			if dd_children != None:
+				for this_child in dd_children:
+					try:
+						this_child.terminate()
+					except:
+						pass
 
-			self.dd_handle.terminate()
+			try:
+				self.dd_handle.terminate()
+			except:
+				pass
 
 	def reset_device (self):
 		dev_re = re.match("/(sd.+)", self.device_file)
