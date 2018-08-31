@@ -4,7 +4,7 @@ import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
 
 class dd_writer (object):
 	def __init__ (self):
-		self.DD_BLOCK_SIZE="10240"
+		self.DD_BLOCK_SIZE="8192"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
 		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
 		# Write timeout in seconds to cause status "timeout"
