@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [ "$1" = "" ]; then
+  echo "usage: $0 path/to/disk_image.dd"
+  echo ""
+  echo "e.g. $0 /media/usb1/ktp.dd"
+  exit
+fi
+
+echo "Making sure you're root..."
+if [ "$EUID" -ne 0 ]; then
+  echo "Please run as root"
+  exit
+fi
+
+echo "Now disabling automount..."
+mv /etc/udev/rules.d/80-auto-mount-usb.rules /etc/udev/rules.d/80-auto-mount-usb.rules.disabled
+
+echo "Stopping digabi-monitor-usb-errors..."
+systemctl stop digabi-monitor-usb-errors
+
+python2 /usr/local/lib/digabi-dd-curses/write_dd.py "$1"
+
+# NB! We're not starting USB-error-watchdog since it may cause trouble when
+#     we're still probably playing with USB sticks at this point
+#echo "Starting digabi-monitor-usb-errors..."
+#systemctl start digabi-monitor-usb-errors
+
+echo "Now enabling automount..."
+mv /etc/udev/rules.d/80-auto-mount-usb.rules.disabled /etc/udev/rules.d/80-auto-mount-usb.rules
+
+echo "All done!"
