@@ -25,10 +25,3 @@ Must be executed as superuser.
 Required packages:
  * Arch Linux: alsa-utils, pv, python2, python2-psutil
  * Debian Jessie: coreutils, alsa-utils, pv, python2.7-minimal, python-psutil
-
-## Documentation specific to MEB copyers
-
-`meb_docs` contains documentation related to copying workstations used by MEB.
-
- * Mapping between USB IDs and hubs/ports (xlsx file)
- * Connecting USB hubs to copying workstations in a way that the mapping is valid (pptx file)
