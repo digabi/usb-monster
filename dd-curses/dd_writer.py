@@ -17,6 +17,7 @@ class dd_writer (object):
 
 		self.image_file = None
 		self.device_file = None
+		self.verify_image = True
 		self.dd_image_size = None
 		self.dd_image_md5 = None
 
@@ -35,6 +36,9 @@ class dd_writer (object):
 		self.slow_bytestransferred_timestamp = None
 
 		self.MD5EXT = '.md5'
+
+	def set_verify(self, new_verify_image_value):
+		self.verify_image = new_verify_image_value
 
 	def update_write_status(self, write_count):
 		if self.dd_handle == None:
@@ -87,9 +91,16 @@ class dd_writer (object):
 			# Finished
 			self.status_code = 4
 			if self.dd_operation == "write":
-				# Write finished, now start verify
-				self.check_md5(self.image_file, self.device_file)
-				self.status_code = 2
+				# Write finished
+				if self.verify_image:
+					# Start verify
+					self.check_md5(self.image_file, self.device_file)
+					self.status_code = 2
+				else:
+					# Verify is disabled - finish write
+					self.dd_handle = None
+					self.dd_operation = "verify"
+					self.status_code = 3
 			elif self.dd_operation == "verify":
 				# Verify finished, check MD5
 

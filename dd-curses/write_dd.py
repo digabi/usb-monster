@@ -1,7 +1,7 @@
 #!/usr/bin/python2
 # -*- coding: utf-8 -*-
 
-import curses, re, sys, os, time, shlex, subprocess
+import curses, re, sys, os, time, shlex, subprocess, argparse
 from dd_writer import dd_writer
 
 COL_USBID = 1
@@ -216,20 +216,21 @@ def update_message (new_message):
 	screen.refresh()
 
 # Main program
+
+# Check parameters
+parser = argparse.ArgumentParser(prog='write_dd', description='Write disk images to several block devices with dd.')
+parser.add_argument("image_path", help="Path to raw image file to write")
+parser.add_argument("-n", "--noverify", help="Skip verifying final images", action="store_true")
+args = parser.parse_args()
+
+# Start curses environment
 screen = curses.initscr()
 screen.clear()
 
-# Check parameter
-try:
-	image_file = sys.argv[1]
-except:
-	my_exit(1, "You have to give image file as the only parameter")
-
-if not is_readable(image_file):
+if not is_readable(args.image_path):
 	my_exit(1, "File %s is not readable")
 
-# FIXME: Check that image_file exists, is readable etc.
-screen.addstr(0, 1, "Image file: %s" % image_file, curses.A_DIM)
+screen.addstr(0, 1, "Image file: %s" % args.image_path, curses.A_DIM)
 
 # Create writers
 while True:
@@ -265,7 +266,10 @@ while True:
 # Start writing
 update_message("Starting writers...")
 for this_usb in all_usbs:
-	writers[this_usb].write_image(image_file, this_usb)
+	if args.noverify:
+		writers[this_usb].set_verify(False)
+
+	writers[this_usb].write_image(args.image_path, this_usb)
 
 update_message("Waiting writers to finish...")
 while update_writer_status(writers) > 0:
