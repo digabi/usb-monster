@@ -33,6 +33,9 @@ def my_log (message):
 	f.write(message+"\n")
 	f.close()
 
+def is_root():
+    return os.geteuid() == 0
+
 def is_readable (path):
 	return os.access(path, os.R_OK)
 
@@ -216,6 +219,10 @@ def update_message (new_message):
 	screen.refresh()
 
 # Main program
+
+if not is_root():
+	print "You have to be root to run this.\n"
+	sys.exit(1)
 
 # Check parameters
 parser = argparse.ArgumentParser(prog='write_dd', description='Write disk images to several block devices with dd.')
