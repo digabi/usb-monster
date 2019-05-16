@@ -1,10 +1,10 @@
 [Desktop Entry]
 Version=1.0
-Name=digabi-dd-curses
+Name=digabi-usb-monster
 Comment=Write disk image to USB memory sticks
 Comment[fi]=Kirjoita levynkuva useille USB-tikuille
-Exec=/usr/local/sbin/digabi-dd-curses
+Exec=/usr/local/bin/digabi-usb-monster
 Terminal=true
 Type=Application
 Categories=System;Utility;
-Icon=/usr/local/lib/digabi-dd-curses/digabi-dd-curses.png
+Icon=/usr/local/lib/digabi-dd-curses/digabi-usb-monster.png

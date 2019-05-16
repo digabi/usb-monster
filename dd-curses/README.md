@@ -1,20 +1,45 @@
 # Write dd image to USB media (curses version)
 
-`write_dd.sh`
+This is the USB-monster used by Matriculation Examination Board to write
+large amounts of USB sticks.
+
+## Creating digabi-dd-curses.deb
+
+To create a Debian installation package containing USB monster and its tools:
+ * Install [fpm](https://fpm.readthedocs.io/en/latest/)
+ * Execute `create-deb.sh` (e.g. `BUILD_NUMBER=71 ./create-deb.sh`)
+
+## Highest Level: digabi-usb-monster
+
+The package installs `digabi-usb-monster.desktop` which executes `digabi-usb-monster`. This asks image path file and executes `digabi-dd-curses` in `x-terminal-emulator` via `sudo`. The script tries different methods executing `sudo` to get superuser privileges.
+
+Example:
+
+`digabi-usb-monster`
+
+## Low Level: digabi-dd-curses
+
+`digabi-dd-curses` disables automount and Abitti-specific service `digabi-monitor-usb-errors` monitoring USB issues. It gets image file as a parameter.
+
+Example:
+
+`sudo ./digabi-dd-curses /path/to/image.dd`
+
+## The Lowest Possbile Level: write_dd.py and dd_writer.py
+
+`write_dd.py` is the Python 2 script which creates the neat ncurses UI and orchestrates the individual writers. Each write is executed as its own process by `dd_writer.py`. Before executing `write_dd` you should disable automount.
+
+`write_dd.py`
  * Calculates a MD5 sum for the given dd image file and stores it to same directory with the image
  * Writes given dd image to all USB media
  * Verifies the dd image from the USB media to the calculated MD5
 
-These actions are carried out to all detected usb devices which do not have
+These actions are carried out to all detected USB devices which do not have
 any mounted filesystems.
 
-## Usage
+Example:
 
- 1. Disable automount etc.
- 2. Execute as root (`python2 write_dd.sh path/to_image.dd`)
- 3. If the failing device(s) is reported
-    after the writing process. Removing sticks one by one tells you when you have removed a failed device
-    as the device path is removed from the list if (failed) devices.
+`sudo python2 ./write_dd.py /path/to/image.dd`
 
 ## Requirements
 
