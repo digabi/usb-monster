@@ -4,11 +4,9 @@ TITLE=USB-monster
 BURNER=/usr/local/lib/digabi-dd-curses/digabi-dd-curses
 
 is_abitti_ktp () {
-  if [ -n `uname -r | grep "\-ytl-"` ]; then
-    return 1
+  if [ -n "$(uname -r | grep '\-ytl-')" ]; then
+    echo "is_abitti"
   fi
-
-  return 0
 }
 
 show_popup () {
@@ -99,7 +97,6 @@ if [ -z "`which zenity`" ]; then
 fi
 
 XTERMPATH=$(get_xterm_path)
-echo ${XTERMPATH}
 if [ -z ${XTERMPATH} ]; then
   write_message "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
   show_popup "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
@@ -112,8 +109,8 @@ if [ ! -x ${BURNER} ]; then
   exit 1
 fi
 
-IMAGEPATH=${HOME}
-if [ is_abitti_ktp ]; then
+IMAGEPATH=${HOME}/*
+if [ -n "$(is_abitti_ktp)" ]; then
   if [ -d /media/usb1 ]; then
     IMAGEPATH=/media/usb1/*
   else
