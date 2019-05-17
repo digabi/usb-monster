@@ -10,7 +10,7 @@ Install Ubuntu Workstation as you would normally do.
 
 Install following packages:
 
-`sudo apt-get install git pv python-psutil`
+`sudo apt-get install git pv python-psutil exfat-fuse`
 
 ## Disable automount
 
