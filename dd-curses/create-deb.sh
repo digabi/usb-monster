@@ -11,11 +11,12 @@ cp digabi-usb-monster deb-root/usr/local/bin/
 mkdir -p deb-root/usr/share/applications
 cp digabi-usb-monster.desktop deb-root/usr/share/applications/
 
-if [ -z ${BUILD_NUMBER} ]; then
-  BUILD_NUMBER=1
+VERSION=`cat VERSION`
+if [ -n "${BUILD_NUMBER}" ]; then
+  VERSION=${VERSION}.${BUILD_NUMBER}
 fi
 
-fpm -C deb-root/ -s dir --name digabi-dd-curses --architecture native -t deb --version "1.0.${BUILD_NUMBER}" \
+fpm -C deb-root/ -s dir --name digabi-dd-curses --architecture all -t deb --version ${VERSION} \
   --depends pv \
   --depends python \
   --depends python-psutil \
