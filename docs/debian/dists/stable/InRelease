@@ -1,0 +1,38 @@
+-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+Origin: abitti-local.fi
+Label: apt repository
+Codename: stable
+Date: Tue, 28 May 2019 10:51:36 UTC
+Architectures: amd64
+Components: contrib
+Description: Abitti USB-monster repo
+MD5Sum:
+ 5262f237dd3bb206fd33753ec7f630fe 591 contrib/binary-amd64/Packages
+ 720a476349d1ee6fc9f6a8fb3b3f9b83 416 contrib/binary-amd64/Packages.gz
+ ea2d83c884b2fdb0d38a584cd15afbcf 122 contrib/binary-amd64/Release
+SHA1:
+ ebd8c6fe6059b3f782c83a574ac666ee6169b00a 591 contrib/binary-amd64/Packages
+ 768809983a322e2c3339724a4fea9ec951caab61 416 contrib/binary-amd64/Packages.gz
+ 376a8baf4ad997b30dc409bf578f85f786e6035c 122 contrib/binary-amd64/Release
+SHA256:
+ 150133fce9aeb633ad7a27316af892dcbace51288b25b7676b888fd81402f212 591 contrib/binary-amd64/Packages
+ c1aa7c69a6abd5f0537e4a31996b0f995fb6c0bcf2cc94e9c94bbc3efc0d2ace 416 contrib/binary-amd64/Packages.gz
+ 00b83b674668e33aec0321ab8e8b9f83d56e118672850e9312c5fc23c907f6c0 122 contrib/binary-amd64/Release
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEEDupRbMFowweNk86u8MtacVcgJHQFAlztErgACgkQ8MtacVcg
+JHRLXg//XP19hYW8ybV/hOhEcTk7I1zHlMT8EJlIRrrZPJhZlz1xdePwhTONMVx0
+mJ/ZEFEBstLl97Od3DywytInquZPU1yLuIRLhyewFl6TasLaxbxonDInIm7Z88tL
+ajDXDoNV8D8Royc9WvgBJz5uwjKgBs+P8MeP/3csTaIdQ0QAiKTN1lNeCmaJBZvl
+ASsPE7lGJTGMzSUIxZjbvd0mFnneAnPbu90UacCPRLYo1vAJsZe8ULKMmGVkp5GM
+6nRI5y5xa21IvQDXMx4U8l9oGM5MJ+GTr9iTJEowMVIstXBnWXHysTAVtkzL8IJh
+Z9rQRYrdljVzc9MPXki8Bmv0/ugxN+HcvyBI2zK8waFfN8Ba84xI4VghiEvebkMG
+rY+kVcQhcT8431slD8ncq0YxMaIyZLBvU+y/wsk3UkKV4bdxs9jBwoftDmmUzYDx
+fCRVyha415UeiG0aHGVfeIRJgL2dxGinvkODgFEr5bnCwAIzzdctUrWmL3boxBB9
++Nu0+GFrok9YCOHrlT1J10IbaDVQjCNzHT85ggsCJ+/EhQx7+s54c6gBppAzKbHU
+ftjWQ7UWjytidPaXKu+ZPKNfWjXy/GOiaUKCU51bq/XYZ9eah7B/TZTI1t9cvdWo
+bIzj9ktbBBLA/U94Pd/o26RogSegXUStOZEQ2HI7Z3lmJmnSJEE=
+=Uofb
+-----END PGP SIGNATURE-----

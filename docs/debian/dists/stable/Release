@@ -1,0 +1,19 @@
+Origin: abitti-local.fi
+Label: apt repository
+Codename: stable
+Date: Tue, 28 May 2019 10:51:36 UTC
+Architectures: amd64
+Components: contrib
+Description: Abitti USB-monster repo
+MD5Sum:
+ 5262f237dd3bb206fd33753ec7f630fe 591 contrib/binary-amd64/Packages
+ 720a476349d1ee6fc9f6a8fb3b3f9b83 416 contrib/binary-amd64/Packages.gz
+ ea2d83c884b2fdb0d38a584cd15afbcf 122 contrib/binary-amd64/Release
+SHA1:
+ ebd8c6fe6059b3f782c83a574ac666ee6169b00a 591 contrib/binary-amd64/Packages
+ 768809983a322e2c3339724a4fea9ec951caab61 416 contrib/binary-amd64/Packages.gz
+ 376a8baf4ad997b30dc409bf578f85f786e6035c 122 contrib/binary-amd64/Release
+SHA256:
+ 150133fce9aeb633ad7a27316af892dcbace51288b25b7676b888fd81402f212 591 contrib/binary-amd64/Packages
+ c1aa7c69a6abd5f0537e4a31996b0f995fb6c0bcf2cc94e9c94bbc3efc0d2ace 416 contrib/binary-amd64/Packages.gz
+ 00b83b674668e33aec0321ab8e8b9f83d56e118672850e9312c5fc23c907f6c0 122 contrib/binary-amd64/Release
