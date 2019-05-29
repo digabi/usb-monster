@@ -17,6 +17,9 @@ if [ -n "${BUILD_NUMBER}" ]; then
 fi
 
 fpm -C deb-root/ -s dir --name digabi-dd-curses --architecture all -t deb --version ${VERSION} \
+  --description "USB monster is a zenity wrapper for dd-curses. This is the Python/Curses\nscript used by Matriculation Examination board to write massive amount of\nUSB sticks in short timeframe." \
+  --maintainer "abitti@ylioppilastutkinto.fi" \
+  --vendor "Matriculation Examination Board" \
   --depends pv \
   --depends python \
   --depends python-psutil \
