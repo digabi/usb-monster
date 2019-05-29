@@ -1,18 +1,18 @@
 Package: digabi-dd-curses
-Version: 1.0.0
+Version: 1.0.1
 License: unknown
-Vendor: matti@konna-xubuntu64
+Vendor: Matriculation Examination Board
 Architecture: all
-Maintainer: <matti@konna-xubuntu64>
+Maintainer: abitti@ylioppilastutkinto.fi
 Installed-Size: 529
 Depends: pv, python, python-psutil, terminator | xfce4-terminal, zenity
 Homepage: http://example.com/no-uri-given
 Priority: extra
 Section: default
-Filename: pool/contrib/d/digabi-dd-curses/digabi-dd-curses_1.0.0_all.deb
-Size: 385000
-SHA256: 53b173968c63257715aae80e6625a6682735cb34ab3d27e3b3fb38ba4e4d0cdc
-SHA1: 32a7b382b30aa6328f3f37dc9caff8aa59b4b8fa
-MD5sum: 80e1d78b0ebe362ee27406d40bf76878
-Description: no description given
+Filename: pool/contrib/d/digabi-dd-curses/digabi-dd-curses_1.0.1_all.deb
+Size: 385108
+SHA256: 4acb07b449598175c0d1c9f519f213d7e64da73f3c65eeb6ad332f541563d314
+SHA1: 24245eaf16e74dcc534a0e9cd3b8f40b980b3405
+MD5sum: 7b4bb7a8c18c47ba0316935cf4d75fd7
+Description: USB monster is a zenity wrapper for dd-curses. This is the Python/Curses\nscript used by Matriculation Examination board to write massive amount of\nUSB sticks in short timeframe.
 

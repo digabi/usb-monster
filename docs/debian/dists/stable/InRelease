@@ -4,44 +4,44 @@ Hash: SHA512
 Origin: abitti-local.fi
 Label: apt repository
 Codename: stable
-Date: Wed, 29 May 2019 06:16:48 UTC
+Date: Wed, 29 May 2019 06:57:24 UTC
 Architectures: i386 amd64
 Components: contrib
 Description: Abitti USB-monster repo
 MD5Sum:
- 5262f237dd3bb206fd33753ec7f630fe 591 contrib/binary-i386/Packages
- 720a476349d1ee6fc9f6a8fb3b3f9b83 416 contrib/binary-i386/Packages.gz
+ 1ceaf96fe3484a2a146dee20d3d651b4 765 contrib/binary-i386/Packages
+ 102d4ce6ab82fe19cc49531060e69fb5 522 contrib/binary-i386/Packages.gz
  947138cde5019c69d94173172a067893 121 contrib/binary-i386/Release
- 5262f237dd3bb206fd33753ec7f630fe 591 contrib/binary-amd64/Packages
- 720a476349d1ee6fc9f6a8fb3b3f9b83 416 contrib/binary-amd64/Packages.gz
+ 1ceaf96fe3484a2a146dee20d3d651b4 765 contrib/binary-amd64/Packages
+ 102d4ce6ab82fe19cc49531060e69fb5 522 contrib/binary-amd64/Packages.gz
  ea2d83c884b2fdb0d38a584cd15afbcf 122 contrib/binary-amd64/Release
 SHA1:
- ebd8c6fe6059b3f782c83a574ac666ee6169b00a 591 contrib/binary-i386/Packages
- 768809983a322e2c3339724a4fea9ec951caab61 416 contrib/binary-i386/Packages.gz
+ 97b913dc9441bdae42b6f963e1ebd26d8009fb1d 765 contrib/binary-i386/Packages
+ e104f8aafd41bf13752ec02c283a47f86b35623c 522 contrib/binary-i386/Packages.gz
  f8450149f3a671e7eec29b9007730f2ee0090a57 121 contrib/binary-i386/Release
- ebd8c6fe6059b3f782c83a574ac666ee6169b00a 591 contrib/binary-amd64/Packages
- 768809983a322e2c3339724a4fea9ec951caab61 416 contrib/binary-amd64/Packages.gz
+ 97b913dc9441bdae42b6f963e1ebd26d8009fb1d 765 contrib/binary-amd64/Packages
+ e104f8aafd41bf13752ec02c283a47f86b35623c 522 contrib/binary-amd64/Packages.gz
  376a8baf4ad997b30dc409bf578f85f786e6035c 122 contrib/binary-amd64/Release
 SHA256:
- 150133fce9aeb633ad7a27316af892dcbace51288b25b7676b888fd81402f212 591 contrib/binary-i386/Packages
- c1aa7c69a6abd5f0537e4a31996b0f995fb6c0bcf2cc94e9c94bbc3efc0d2ace 416 contrib/binary-i386/Packages.gz
+ 67126ed06c9d083cf8f96c2d41c27e4d7bee2611ae1bb380d53c84a5587d1796 765 contrib/binary-i386/Packages
+ a19153e6498cd632fcd99dacde6d85ad8346a24d3293e9cf86210c2786096448 522 contrib/binary-i386/Packages.gz
  cabc67d244a3949e5d93bbf702afa77ad897f5a2add83ca21669b9b5ecb5d9dc 121 contrib/binary-i386/Release
- 150133fce9aeb633ad7a27316af892dcbace51288b25b7676b888fd81402f212 591 contrib/binary-amd64/Packages
- c1aa7c69a6abd5f0537e4a31996b0f995fb6c0bcf2cc94e9c94bbc3efc0d2ace 416 contrib/binary-amd64/Packages.gz
+ 67126ed06c9d083cf8f96c2d41c27e4d7bee2611ae1bb380d53c84a5587d1796 765 contrib/binary-amd64/Packages
+ a19153e6498cd632fcd99dacde6d85ad8346a24d3293e9cf86210c2786096448 522 contrib/binary-amd64/Packages.gz
  00b83b674668e33aec0321ab8e8b9f83d56e118672850e9312c5fc23c907f6c0 122 contrib/binary-amd64/Release
 -----BEGIN PGP SIGNATURE-----
 
-iQIzBAEBCgAdFiEEDupRbMFowweNk86u8MtacVcgJHQFAlzuI9AACgkQ8MtacVcg
-JHR3RA//Q0hj6bxFQEAi1tITF8jhuHXqUXqMLIloK3tLfdV6cbLDzOx6shG0rEFL
-AvhOrtpIRHAl5K0IaT6ag18cKJ4UulZUJ1YDKHS5ee3A1G2EMihtdfqNpTf7QDB+
-zIquLmGW7H6iCl9CCzS+Wpbqxl0bKq0Yg/EodK7EUjhF2lNmUqDnvluCEKoDehXA
-ixnrbzYuaa6LUu0I/id4KcySljKhHGvhrErWkWL6I6KaL6006nSE740IRSiuAD8b
-Dkw0bpDQpF5vlFZGrSfZeXSodRa4SLEkfZTYs5DBd4Sa53tRav3fsa4DCBiECVSg
-97I1P0GlxwJze0JLSZBEIBjLwTfwEJEB7U6VZa1aNHDQYGNogpul5WcyOWEGHQ9r
-EqhRjHEqeLXsZzC7X+caR1PDqPuLxwBxJoEDSYY1nAaF8HyFik+BxFVF6VqN1XR8
-1GdDZpdAliSkIJXc7LSn8xOTGNr6dpkyltjlVwTj0fyN8AsikdMqLkc5neB1pI50
-GKXtzKmzGpPUEVSnlSoPV7cIn7FOktDTzB2pOj4k9lfbNLe7kiZjWYGGuj1gMTeW
-GkcLBYEev6IGAl1ySGYRhKqnYlpYNjga6PpdGi81jGpKdYRJlXVge2UAshtxxTjY
-w99TZ5+VSR1OLB3Ho/AllvKCblSj/Rojt7a2Xn1a6Ui7lppRsiQ=
-=UA/j
+iQIzBAEBCgAdFiEEDupRbMFowweNk86u8MtacVcgJHQFAlzuLVQACgkQ8MtacVcg
+JHQg4Q//QXS0HcVV0DVN7TjrqxO55ua6mxy8XzRNmxXnckuJqsa7ZA3QNhkCRH1I
+Jbxl5MoVGJepgbEmw+5UJ9jTPF0PEoeLjObjPrxtxCgnCFGivurTB3zkjvd4oF+M
+CQq0HE7KQ0RY1VHYbEAKrLjtV2hOKXbFC2/EcbcBwLZnNl2Zc7lNlxp1/fBwqxO7
+Twx0p9cL3YY6iS521G6DRxYAkF95AZsQgHymNsYA0Ag3FXxhijnaAYmc9tg/5odm
+5ED4wAPM0yf/JE+rFU1IVGTjUENCN2nrGfgkXly+D45cKpa8LjAKwB4yxr1eDsSW
+Wl/VTP/Bxz2iyIKxocCJ2p4x0k3PcXD0X9vVJb5UbCP5PgG35YagW1gmOr6yFwV4
+wFcueLbB1aolGq4cfXVp1HGjglqE2SuR4fJgY/HDG6yX1lARpvQp4YqgtBa4BGSH
+XNT7jXJi5/klEdMPdZER9JF2tPVl9RJo9VDo5U6XeCG7m7YakaE5ramCbE0s57CW
+fVruS5vGyV5/S0RO3+fEbif+8yZk8Tpc2aJlRfxG0IBUkYVWlAp6TuMklv3wRwL/
+8POo+GvuWxEZQSJGQDNf0UjtTUi1ejWefCgxN4Ub9akdVS8zxU+WLCz5JnxltNKt
+8eyTmDJnUtdkeF5EckSMzRUxHiMKfhH6g+Hc/NwpkBK47B1KFEM=
+=yaog
 -----END PGP SIGNATURE-----
