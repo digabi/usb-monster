@@ -9,6 +9,26 @@ Command-line tools for creating massive number of USB memory sticks.
    at the MEB and what what you're probably looking for.
  * [doc/](doc/README.md) Instructions for creating an USB-monsterised Linux workstation.
 
+## Installing USB-monster
+
+USB-monster can be installed to recent versions of Debian and Ubuntu.
+
+ 1. Import signing key:
+    ```
+    sudo bash -c 'wget -O - https://digabi.github.io/usb-monster/gpg.key | apt-key add -'
+    ```
+
+ 1. Add repo to your sources:
+    ```
+    sudo bash -c 'echo "deb https://digabi.github.io/usb-monster/debian stable contrib" >/etc/apt/sources.list.d/usbmonster.list'
+    ```
+
+ 1. `sudo apt-get update`
+
+ 1. `sudo apt-get install digabi-dd-curses`
+
+After this the USB-monster updates automatically as part of the standard update process.
+
 ## Updating digabi-dd-curses.deb
 
  1. Make sure you have the private key to sign the repository:
@@ -31,7 +51,7 @@ Command-line tools for creating massive number of USB memory sticks.
     the key in `docs/debian/conf/distributions`
 
  1. Update `dd-curses/VERSION`
- 
+
  1. Create new package and update repository: `make update-repo-deb`
 
  1. Commit and push changes.
