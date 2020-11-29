@@ -25,4 +25,5 @@ fpm -C deb-root/ -s dir --name digabi-dd-curses --architecture all -t deb --vers
   --depends python-psutil \
   --depends "terminator | xfce4-terminal" \
   --depends zenity \
+  --depends unzip \
   .

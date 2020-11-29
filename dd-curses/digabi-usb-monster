@@ -41,6 +41,33 @@ get_xterm_path () {
   write_message "None of known X terminal emulator variants was found"
 }
 
+get_file_ext () {
+  EXTPATH=$1
+  EXTNAME=`basename ${EXTPATH}`
+  EXT=${EXTNAME##*.}
+  echo $EXT
+}
+
+unzip_etcher_zip () {
+  ETCHERZIP=$1
+  ETCHERZIPBASENAME=`basename $1`
+  ETCHERTEMP=`mktemp --tmpdir -d usb-monster-etcher.XXXXX`
+  unzip -qq ${ETCHERZIP} ytl/ktp.img ytl/koe.img -d ${ETCHERTEMP} \
+    | zenity --title="$TITLE" --text="Unpacking ${ETCHERZIPBASENAME}..." --no-cancel --progress --pulsate --auto-close
+  ETCHERZIPIMAGE=`find ${ETCHERTEMP} | grep .img`
+
+  if [ -z "${ETCHERZIPIMAGE}" ]
+  then
+    # File does not contain valid image file
+    echo
+  else
+    ETCHERIMAGE=`mktemp --tmpdir usb-monster.XXXXX`
+    mv ${ETCHERZIPIMAGE} ${ETCHERIMAGE}
+    rm -fR ${ETCHERTEMP}
+    echo ${ETCHERIMAGE}
+  fi
+}
+
 execute_burner () {
   IMAGE=$1
   XTERM=$2
@@ -120,12 +147,25 @@ fi
 
 IMAGEFILE=
 while [ -z ${IMAGEFILE} ]; do
-  IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img)| *.dd *.img"`
+  IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .zip)| *.dd *.img *.zip"`
 
   if [ -z ${IMAGEFILE} ]; then
     write_message "Cancelled!"
     show_popup "Cancelled!"
     exit 0
+  fi
+
+  IMAGE_EXT=`get_file_ext ${IMAGEFILE}`
+
+  if [ "${IMAGE_EXT}" = "zip" ]; then
+    write_message "User selected .zip file, trying to extract Etcher zip"
+    UNZIPPED_IMAGEFILE=`unzip_etcher_zip ${IMAGEFILE}`
+    if [ -z "${UNZIPPED_IMAGEFILE}" ]; then
+      write_message "File ${IMAGEFILE} does not contain MEB image file"
+      show_popup "File ${IMAGEFILE} does not contain MEB image file"
+      exit 1
+    fi
+    IMAGEFILE="${UNZIPPED_IMAGEFILE}"
   fi
 
   if [ ! -r ${IMAGEFILE} ]; then
