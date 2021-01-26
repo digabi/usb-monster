@@ -99,24 +99,6 @@ def get_usb_path (device):
 
 	return ""
 
-def get_block_writes_completed ():
-	# Get number of writes completed as dictionary device:# of writes completed
-	# e.g. {"/dev/sdb":6673736, "/dev/sdc":732738}
-	# The data is read from /proc/diskstats, see kernel doc "iostats.txt"
-
-	f = open("/proc/diskstats")
-	lines = f.readlines()
-	f.close()
-
-	data = {}
-
-	for this_line in lines:
-		fields = this_line.split()
-		if fields[2] != None and fields[2] != "" and fields[7] != None:
-			data["/dev/"+fields[2]] = fields[7]
-
-	return data
-
 def get_window_size_xy ():
 	# Get screen size
 	winsize = screen.getmaxyx()
@@ -155,18 +137,12 @@ def update_writer_status (my_writers, current_usbs = None):
 		item = (this_device, get_usb_path(this_device))
 		writer_ids.append(item)
 
-	write_counts = get_block_writes_completed()
-
 	for this_device_tuple in sorted(writer_ids, key=lambda device: device[1]):
 		this_device = this_device_tuple[0]
 		this_usb_path = this_device_tuple[1]
 		this_writer = my_writers[this_device]
 
-		# Get current status with latest iostats to detect dead USB sticks
-		this_write_count = None
-		if this_device in write_counts:
-			this_write_count = write_counts[this_device]
-		status = this_writer.update_write_status(this_write_count)
+		status = this_writer.update_write_status()
 
 		writer_count += 1
 

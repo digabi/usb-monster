@@ -4,11 +4,30 @@ import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
 
 class dd_writer (object):
 	def __init__ (self):
-		self.DD_BLOCK_SIZE="8192"
+		self.DD_BLOCK_SIZE="1024"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
-		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
+
+		self.STATUS_CODE_NONE = 0
+		self.STATUS_CODE_WRITING = 1
+		self.STATUS_CODE_VERIFYING = 2
+		self.STATUS_CODE_FINISHED = 3
+		self.STATUS_CODE_ERROR = 4
+		self.STATUS_CODE_VERIFY_FAILED = 5
+		self.STATUS_CODE_TIMEOUT = 6
+		self.STATUS_CODE_TIMEOUT_RESOLVED = 7
+		self.STATUS_CODE_SLOW = 8
+		self.STATUS_CODE_SLOW_RESOLVED = 9
+
+		self.RE_OUTPUT = {
+			'bytes_transferred': '(\d+) bytes',
+			'md5sum': '^([0-9a-f]+) '
+		}
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
+		# Do not raise timeout flag if the write percent is larger than this
+		# This is needed to avoid unnecessary timeouts while waiting caches to
+		# be written to the USB stick
+		self.TIMEOUT_PRESERVATION_PERCENT = 95
 		# Raise "slow" flag if average speed bytes/second is less than this
 		self.SLOW = 1*1024*1024 # 1 MiB/s
 
@@ -21,47 +40,44 @@ class dd_writer (object):
 		self.dd_image_size = None
 		self.dd_image_md5 = None
 
-		self.status_code = 0
+		self.status_code = self.STATUS_CODE_NONE
 		self.dd_handle = None
 
 		self.dd_operation = ""	# Meaningful values are 'write', 'verify'
 		self.dd_previous_status = ""
 		self.dd_previous_stdout = ""
 
-		self.timeout_lastchange = None
-		self.timeout_last_write_count = None
-
-		self.slow_transfer_started = None
-		self.slow_bytestransferred = None
-		self.slow_bytestransferred_timestamp = None
+		self.transfer_started = None
+		self.bytes_transferred = None
+		self.bytes_transferred_timestamp = None
 
 		self.MD5EXT = '.md5'
 
 	def set_verify(self, new_verify_image_value):
 		self.verify_image = new_verify_image_value
 
-	def update_write_status(self, write_count):
+	def update_write_status(self):
 		if self.dd_handle == None:
 			return self.status_code
 
 		# If we are in timeout mode check if device still exists
-		if self.status_code == 6:
+		if self.status_code == self.STATUS_CODE_TIMEOUT:
 			if not self.device_present():
-				self.status_code = 7
+				self.status_code = self.STATUS_CODE_TIMEOUT_RESOLVED
 			return self.status_code
 
 		# Return "resolved timeout" here
-		if self.status_code == 7:
+		if self.status_code == self.STATUS_CODE_TIMEOUT_RESOLVED:
 			return self.status_code
 
 		# If we are in slow mode check if device still exists
-		if self.status_code == 8:
+		if self.status_code == self.STATUS_CODE_SLOW:
 			if not self.device_present():
-				self.status_code = 9
+				self.status_code = self.STATUS_CODE_SLOW_RESOLVED
 			return self.status_code
 
 		# Return "resolved slow" here
-		if self.status_code == 9:
+		if self.status_code == self.STATUS_CODE_SLOW_RESOLVED:
 			return self.status_code
 
 		retcode = self.dd_handle.poll()
@@ -69,38 +85,38 @@ class dd_writer (object):
 		if retcode == None:
 			# Still writing/verifying
 			if self.dd_operation == "write":
-				if self.if_timeout(write_count):
-					self.status_code = 6
+				if self.if_timeout():
+					self.status_code = self.STATUS_CODE_TIMEOUT
 					# Reset device
 					self.reset_device()
 					# Kill writer process
 					self.kill_dd()
 				elif self.if_slow():
-					self.status_code = 8
+					self.status_code = self.STATUS_CODE_SLOW
 					# Kill writer process
 					self.kill_dd()
 				else:
-					self.status_code = 1
+					self.status_code = self.STATUS_CODE_WRITING
 			if self.dd_operation == "verify":
-				self.status_code = 2
+				self.status_code = self.STATUS_CODE_VERIFYING
 		elif retcode < 0:
 			# Error
-			self.status_code = 4
+			self.status_code = self.STATUS_CODE_ERROR
 			self.dd_handle = None
 		else:
 			# Finished
-			self.status_code = 4
+			self.status_code = self.STATUS_CODE_ERROR
 			if self.dd_operation == "write":
 				# Write finished
 				if self.verify_image:
 					# Start verify
 					self.check_md5(self.image_file, self.device_file)
-					self.status_code = 2
+					self.status_code = self.STATUS_CODE_VERIFYING
 				else:
 					# Verify is disabled - finish write
 					self.dd_handle = None
 					self.dd_operation = "verify"
-					self.status_code = 3
+					self.status_code = self.STATUS_CODE_FINISHED
 			elif self.dd_operation == "verify":
 				# Verify finished, check MD5
 
@@ -110,34 +126,32 @@ class dd_writer (object):
 				if self.dd_previous_stdout != None:
 					if self.dd_previous_stdout == self.dd_image_md5:
 						# Verify ok, finished
-						self.status_code = 3
+						self.status_code = self.STATUS_CODE_FINISHED
 					else:
 						# Verify error
-						self.status_code = 5
+						self.status_code = self.STATUS_CODE_VERIFY_FAILED
 				else:
 					# Did not get any stdout, return error
-					self.status_code = 4
+					self.status_code = self.STATUS_CODE_ERROR
 
 				self.dd_handle = None
 
 		return self.status_code
 
-	def if_timeout (self, current_write_count):
-		if self.timeout_lastchange == None:
-			# This is the first entry
+	def update_timeout_counter(self, current_write_count):
+		if (self.timeout_lastchange == None) or (self.timeout_last_write_count != current_write_count):
 			self.timeout_lastchange = time.time()
 			self.timeout_last_write_count = current_write_count
 
+	def if_timeout (self):
+		if self.bytes_transferred is None or self.bytes_transferred == 0:
 			return False
 
-		if current_write_count != self.timeout_last_write_count:
-			# Write count has changed
-			self.timeout_lastchange = time.time()
-			self.timeout_last_write_count = current_write_count
-
+		if self.TIMEOUT_PRESERVATION_PERCENT < self.get_transfer_percent():
+			# We are probably waiting for the caches to flush -> do not raise the timeout flag
 			return False
 
-		secs_since_lastchange = time.time() - self.timeout_lastchange
+		secs_since_lastchange = time.time() - self.bytes_transferred_timestamp
 
 		if secs_since_lastchange > self.TIMEOUT:
 			# Too long time has passed since last change
@@ -200,7 +214,9 @@ class dd_writer (object):
 			except:
 				int_bytes_transferred = 0
 
-			avg_speed = self.get_transfer_speed(int_bytes_transferred)
+			self.set_bytes_transferred(int_bytes_transferred)
+
+			avg_speed = self.get_transfer_speed()
 			perc_done = self.get_transfer_percent()
 
 			str_bytes_transferred = self.sizeof_fmt(int_bytes_transferred)
@@ -212,20 +228,19 @@ class dd_writer (object):
 
 	def set_bytes_transferred(self, bytes_transferred = None):
 		if bytes_transferred != None:
-			if (self.slow_transfer_started == None) or (bytes_transferred < self.slow_bytestransferred):
-				self.slow_transfer_started = time.time()
+			if (self.transfer_started == None) or (bytes_transferred < self.bytes_transferred):
+				self.transfer_started = time.time()
 
-			self.slow_bytestransferred_timestamp = time.time()
-			self.slow_bytestransferred = bytes_transferred
+			if bytes_transferred != self.bytes_transferred:
+				self.bytes_transferred_timestamp = time.time()
+				self.bytes_transferred = bytes_transferred
 
-	def get_transfer_speed(self, bytes_transferred = None):
-		self.set_bytes_transferred(bytes_transferred)
-
-		if (self.slow_transfer_started == None):
+	def get_transfer_speed(self):
+		if (self.transfer_started == None):
 			# We haven't been initialised yet, return zero
 			return 0
 
-		secs_passed = self.slow_bytestransferred_timestamp - self.slow_transfer_started
+		secs_passed = self.bytes_transferred_timestamp - self.transfer_started
 		if (secs_passed < 5):
 			# Don't report avg speed too early, only after 5 seconds
 			return 0
@@ -234,19 +249,17 @@ class dd_writer (object):
 		avg_speed = 0
 
 		try:
-			avg_speed = self.slow_bytestransferred / secs_passed
+			avg_speed = self.bytes_transferred / secs_passed
 		except ZeroDivisionError:
 			pass
 
 		return avg_speed
 
-	def get_transfer_percent(self, bytes_transferred = None):
-		self.set_bytes_transferred(bytes_transferred)
-
-		if (self.slow_bytestransferred == None) or (self.dd_image_size == None):
+	def get_transfer_percent(self):
+		if (self.bytes_transferred == None) or (self.dd_image_size == None):
 			return 0
 
-		return (self.slow_bytestransferred / float(self.dd_image_size)) * 100.0
+		return (self.bytes_transferred / float(self.dd_image_size)) * 100.0
 
 	def update_write_status_str(self, status_code = None):
 		if status_code == None:
@@ -278,7 +291,7 @@ class dd_writer (object):
 		self.set_bytes_transferred(0)
 
 		self.dd_operation = "write"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
+		dd_params = ['dd', 'if=%s' % file_path, 'of=%s' % self.device_file, 'bs=%s' % self.DD_BLOCK_SIZE, 'status=progress' ]
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Functions related to MD5 calculation
@@ -327,7 +340,8 @@ class dd_writer (object):
 		self.set_bytes_transferred(0)
 
 		self.dd_operation = "verify"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -n -b | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
+		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s status=progress | head -c %d | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
+
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Miscellaneous helpers
