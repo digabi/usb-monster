@@ -2,12 +2,11 @@
 
 Command-line tools for creating massive number of USB memory sticks.
 
- * [fat/](fat/README.md) Create FAT32 filesystem and copy files. No verify.
- * [dd/](dd/README.md) Write `dd` images. Verifies all media.
- * [dd-curses/](dd-curses/README.md) Write `dd` images and verifies written disks.
-   A state-of-the-art curses-based UI displays progress etc. This what we currently use
-   at the MEB and what what you're probably looking for.
- * [doc/](doc/README.md) Instructions for creating an USB-monsterised Linux workstation.
+ * [src/](src/README.md) Write `dd` images and verifies written disks.
+   A state-of-the-art curses-based UI displays progress etc. This is what we currently
+   use at the MEB to write USB memory sticks.
+ * [speed-test/](speed-test/README.md) Scripts which have been used to benchmark
+   USB memory sticks in the MEB tendering processes.
 
 ## Installing USB-monster
 
