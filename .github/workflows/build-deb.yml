@@ -1,0 +1,34 @@
+name: "Build And Publish"
+on: push
+jobs:
+  build_and_publish:
+    name: "Build And Publish usb-monster.deb"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: "Build USB-monster.deb"
+      run: make deb
+
+    - name: "Delete Existing Draft Releases"
+      run: python3 tools/github_purge_draft_releases.py $GITHUB_REPOSITORY ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "Create Draft Release"
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: "AutomaticDraft"
+        release_name: ""
+        draft: true
+        prerelease: false
+
+    - name: "Upload usb-monster.deb to Draft"
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: src/*.deb
+        asset_content_type: application/vnd.debian.binary-package

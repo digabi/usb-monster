@@ -2,8 +2,8 @@
 
 set -e
 
-mkdir -p deb-root/usr/local/lib/digabi-dd-curses
-cp dd_writer.py digabi-dd-curses digabi-usb-monster.png error.wav ok.wav README.md write_dd.py deb-root/usr/local/lib/digabi-dd-curses/
+mkdir -p deb-root/usr/local/lib/digabi-usb-monster
+cp dd_writer.py digabi-dd-curses digabi-usb-monster.png error.wav ok.wav README.md write_dd.py deb-root/usr/local/lib/digabi-usb-monster/
 
 mkdir -p deb-root/usr/local/bin
 cp digabi-usb-monster deb-root/usr/local/bin/
@@ -13,10 +13,10 @@ cp digabi-usb-monster.desktop deb-root/usr/share/applications/
 
 VERSION=`cat VERSION`
 if [ -n "${BUILD_NUMBER}" ]; then
-  VERSION=${VERSION}.${BUILD_NUMBER}
+  VERSION=${VERSION}.${GITHUB_BUILD_NUMBER}
 fi
 
-fpm -C deb-root/ -s dir --name digabi-dd-curses --architecture all -t deb --version ${VERSION} \
+fpm -C deb-root/ -s dir --name digabi-usb-monster --architecture all -t deb --version ${VERSION} \
   --description "USB monster is a zenity wrapper for dd-curses. This is the Python/Curses\nscript used by Matriculation Examination board to write massive amount of\nUSB sticks in short timeframe." \
   --maintainer "abitti@ylioppilastutkinto.fi" \
   --vendor "Matriculation Examination Board" \
