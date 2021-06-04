@@ -2,6 +2,7 @@ DD_CURSES_VERSION := $(shell cat src/VERSION)
 DD_DEB=digabi-dd-curses_$(DD_CURSES_VERSION)_all.deb
 
 clean-deb:
+	- rm src/VERSION_FULL.tmp
 	- rm src/*.deb
 
 clean-repo:

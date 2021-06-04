@@ -16,6 +16,8 @@ if [ -n "${BUILD_NUMBER}" ]; then
   VERSION=${VERSION}.${GITHUB_BUILD_NUMBER}
 fi
 
+echo -n ${VERSION} >VERSION_FULL.tmp
+
 fpm -C deb-root/ -s dir --name digabi-usb-monster --architecture all -t deb --version ${VERSION} \
   --description "USB monster is a zenity wrapper for dd-curses. This is the Python/Curses\nscript used by Matriculation Examination board to write massive amount of\nUSB sticks in short timeframe." \
   --maintainer "abitti@ylioppilastutkinto.fi" \
