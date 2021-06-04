@@ -7,6 +7,11 @@ jobs:
     steps:
     - uses: actions/checkout@v2
 
+    - name: Install prerequisite packages
+      run: |
+          sudo apt -y install ruby ruby-dev rubygems
+          sudo gem install --no-document fpm
+
     - name: "Build USB-monster.deb"
       run: make deb
 
