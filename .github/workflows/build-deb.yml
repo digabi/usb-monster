@@ -35,7 +35,7 @@ jobs:
         draft: true
         prerelease: false
 
-    - name: "Upload usb-monster.deb to Draft"
+    - name: "Upload digabi-usb-monster_VERSION_all.deb to Draft"
       uses: actions/upload-release-asset@v1.0.1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -43,4 +43,14 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
         asset_name: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: "Upload digabi-usb-monster_latest_all.deb to Draft"
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
+        asset_name: digabi-usb-monster_latest_all.deb
         asset_content_type: application/vnd.debian.binary-package
