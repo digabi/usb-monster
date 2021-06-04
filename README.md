@@ -1,6 +1,6 @@
-# usb-monster
+# USB-monster
 
-Command-line tools for creating massive number of USB memory sticks.
+Command-line tool and GUI for creating massive number of USB memory sticks.
 
  * [src/](src/README.md) Write `dd` images and verifies written disks.
    A state-of-the-art curses-based UI displays progress etc. This is what we currently
@@ -12,45 +12,38 @@ Command-line tools for creating massive number of USB memory sticks.
 
 USB-monster can be installed to recent versions of Debian and Ubuntu.
 
- 1. Import signing key:
-    ```
-    sudo bash -c 'wget -O - https://digabi.github.io/usb-monster/gpg.key | apt-key add -'
-    ```
+ 1. Get the latest `.deb` from [release page](https://github.com/digabi/usb-monster/releases)
+ 1. Install: `sudo apt install ./digabi-usb-monster_X.X.X_all.deb`
 
- 1. Add repo to your sources:
-    ```
-    sudo bash -c 'echo "deb https://digabi.github.io/usb-monster/debian stable contrib" >/etc/apt/sources.list.d/usbmonster.list'
-    ```
+## Using USB-monster
 
- 1. `sudo apt-get update`
+ 1. Download the image file. It can be raw disk image (typically `.dd`, `.img` or `.iso`)
+    or a `.zip` file with the balenaEtcher file structure. Abitti is being [shipped](https://www.abitti.fi/fi/paivitykset/)
+    in the latter format.
+ 1. Start the `usb-digabi-monster` from the start menu or from the command line (`usb-digabi-monster`).
+ 1. Choose the image file.
+ 1. To write the disk images you have to have `sudo` access. Enter your password to claim
+    you ownership to these rights.
+ 1. Insert USB sticks and press any key to scan the USBs.
+ 1. Press Enter to start writing.
 
- 1. `sudo apt-get install digabi-dd-curses`
+## Using USB-monster from the command line
 
-After this the USB-monster updates automatically as part of the standard update process.
+You can skip the GUI stuff and just execute the writer. This works for the raw images only.
 
-## Updating digabi-dd-curses.deb
+ * `sudo /usr/local/lib/digabi-usb-monster/write_dd.py /path/to/image.dd`
+ * Skip verification process: \
+   `sudo /usr/local/lib/digabi-usb-monster/write_dd.py -n /path/to/image.dd`
 
- 1. Make sure you have the private key to sign the repository:
-    ```
-    gpg --list-key
-    gpg: checking the trustdb
-    gpg: marginals needed: 3  completes needed: 1  trust model: pgp
-    gpg: depth: 0  valid:   1  signed:   0  trust: 0-, 0q, 0n, 0m, 0f, 1u
-    /home/matti/.gnupg/pubring.kbx
-    ------------------------------
-    pub   rsa4096 2019-05-28 [SC]
-      0EEA516CC168C3078D93CEAEF0CB5A7157202474
-    uid           [ultimate] Abitti Team <abitti@ylioppilastutkinto.fi>
-    ```
-    If not you'll find the instructions to key handling in the [documentation](doc/DEBIAN-REPO.md).
+## Publising a new version
 
- 1. Make sure you have `reprepro` installed.
+ 1. Update `src/VERSION`, push changes and wait GitHub Action "Build And Publish" to finish
+ 1. Go to [releases](https://github.com/digabi/usb-monster/releases). There should be a new draft release with a `.deb` file attached. Press the Edit button.
+ 1. Enter the new version number to "Tag version" field (e.g. "v1.6.0" - note the "v")
+ 1. Fill "Release title" Field
+ 1. Copy release note markup from `README.md` to "Describe this release" textarea
+ 1. Click "Publish release"
 
- 1. Check that the signing key hash (`0EEA516CC168C3078D93CEAEF0CB5A7157202474`) matches to
-    the key in `docs/debian/conf/distributions`
+## Changelog
 
- 1. Update `dd-curses/VERSION`
-
- 1. Create new package and update repository: `make update-repo-deb`
-
- 1. Commit and push changes.
+Nothing here yet.
