@@ -1,7 +1,7 @@
 #!/bin/bash
 
 TITLE=USB-monster
-BURNER=/usr/local/lib/digabi-dd-curses/digabi-dd-curses
+BURNER=/usr/local/lib/digabi-usb-monster/digabi-dd-curses
 
 is_abitti_ktp () {
   if [ -n "$(uname -r | grep '\-ytl-')" ]; then

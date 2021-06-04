@@ -7,4 +7,4 @@ Exec=/usr/local/bin/digabi-usb-monster
 Terminal=true
 Type=Application
 Categories=System;Utility;
-Icon=/usr/local/lib/digabi-dd-curses/digabi-usb-monster.png
+Icon=/usr/local/lib/digabi-usb-monster/digabi-usb-monster.png
