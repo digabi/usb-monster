@@ -1,10 +1,12 @@
 # USB-monster
 
-Command-line tool and GUI for creating massive number of USB memory sticks.
+Command-line tool and GUI for creating massive number of USB memory sticks and cron scripts
+to download and unzip latest Abitti image files.
 
  * [src/](src/README.md) Write `dd` images and verifies written disks.
    A state-of-the-art curses-based UI displays progress etc. This is what we currently
    use at the MEB to write USB memory sticks.
+ * `downloader/` Cron scripts which download latest Abitti images to `/opt/abitti-images`
  * [speed-test/](speed-test/README.md) Scripts which have been used to benchmark
    USB memory sticks in the MEB tendering processes.
 
@@ -34,6 +36,16 @@ You can skip the GUI stuff and just execute the writer. This works for the raw i
  * `sudo /usr/local/lib/digabi-usb-monster/write_dd.py /path/to/image.dd`
  * Skip verification process: \
    `sudo /usr/local/lib/digabi-usb-monster/write_dd.py -n /path/to/image.dd`
+
+## Disabling Abitti Downloader
+
+To disable Abitti Downloader cron job edit `/etc/default/abitti-downloader` and comment
+the `ENABLE_DOWNLOADER` value:
+
+```
+# To disable automatic Abitti download comment following line or set value to empty
+#ENABLE_DOWNLOADER=1
+```
 
 ## Publising a new version
 

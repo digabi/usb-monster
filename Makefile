@@ -9,6 +9,7 @@ clean:
 	- rm *.deb
 
 deb: src/* clean
+	# USB-monster app
 	mkdir -p temp/deb-root/usr/local/lib/digabi-usb-monster
 	cp src/dd_writer.py src/digabi-dd-curses src/digabi-usb-monster.png src/error.wav src/ok.wav src/README.md src/write_dd.py temp/deb-root/usr/local/lib/digabi-usb-monster/
 
@@ -17,6 +18,16 @@ deb: src/* clean
 
 	mkdir -p temp/deb-root/usr/share/applications
 	cp src/digabi-usb-monster.desktop temp/deb-root/usr/share/applications/
+
+	# Abitti Downloader scripts
+	mkdir -p temp/deb-root/etc/cron.d
+	cp downloader/abitti-downloader.cron temp/deb-root/etc/cron.d/abitti-downloader
+
+	mkdir -p temp/deb-root/usr/local/sbin/
+	cp downloader/abitti-downloader.sh temp/deb-root/usr/local/sbin/abitti-downloader
+
+	mkdir -p temp/deb-root/etc/default/
+	cp downloader/abitti-downloader.default temp/deb-root/etc/default/abitti-downloader
 
 	echo -n ${VERSION_FULL} >temp/VERSION_FULL.tmp
 
