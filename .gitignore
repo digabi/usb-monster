@@ -1,4 +1,3 @@
 *.pyc
-dd-curses/deb-root/
-dd-curses/*.deb
-
+*.deb
+temp/
