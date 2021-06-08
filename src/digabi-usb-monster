@@ -2,12 +2,6 @@
 
 TITLE=USB-monster
 
-is_abitti_ktp () {
-  if [ -n "$(uname -r | grep '\-ytl-')" ]; then
-    echo "is_abitti"
-  fi
-}
-
 show_popup () {
   zenity_path=`which zenity`
   if [ -n $zenity_path ]; then
@@ -92,12 +86,9 @@ fi
 
 # Find an initial path for the image file browser
 IMAGEPATH=${HOME}/*
-if [ -n "$(is_abitti_ktp)" ]; then
-  if [ -d /media/usb1 ]; then
-    IMAGEPATH=/media/usb1/*
-  else
-    IMAGEPATH=/media/*
-  fi
+if [ -d /opt/abitti-images ]; then
+  # We have a path created by Abitti Downloader
+  IMAGEPATH=/opt/abitti-images/*
 fi
 
 # Select (and if required, unzip) the image file
