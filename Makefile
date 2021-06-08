@@ -11,13 +11,16 @@ clean:
 deb: src/* clean
 	# USB-monster app
 	mkdir -p temp/deb-root/usr/local/lib/digabi-usb-monster
-	cp src/dd_writer.py src/digabi-dd-curses src/digabi-usb-monster.png src/error.wav src/ok.wav src/README.md src/write_dd.py temp/deb-root/usr/local/lib/digabi-usb-monster/
+	cp src/dd_writer.py src/digabi-usb-monster.png src/error.wav src/ok.wav src/README.md src/write_dd.py temp/deb-root/usr/local/lib/digabi-usb-monster/
 
 	mkdir -p temp/deb-root/usr/local/bin
 	cp src/digabi-usb-monster temp/deb-root/usr/local/bin/
 
 	mkdir -p temp/deb-root/usr/share/applications
 	cp src/digabi-usb-monster.desktop temp/deb-root/usr/share/applications/
+
+	mkdir -p temp/deb-root/usr/share/polkit-1/actions
+	cp src/polkit/digabi-usb-monster.policy temp/deb-root/usr/share/polkit-1/actions/
 
 	# Abitti Downloader scripts
 	mkdir -p temp/deb-root/etc/cron.d
@@ -41,4 +44,5 @@ deb: src/* clean
 	  --depends "terminator | xfce4-terminal" \
 	  --depends zenity \
 	  --depends unzip \
+		--depends policykit-1 \
 	  .

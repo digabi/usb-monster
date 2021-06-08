@@ -1,7 +1,6 @@
 #!/bin/bash
 
 TITLE=USB-monster
-BURNER=/usr/local/lib/digabi-usb-monster/digabi-dd-curses
 
 is_abitti_ktp () {
   if [ -n "$(uname -r | grep '\-ytl-')" ]; then
@@ -68,74 +67,30 @@ unzip_etcher_zip () {
   fi
 }
 
-execute_burner () {
-  IMAGE=$1
-  XTERM=$2
 
-  # Start without asking anything - this works with Abitti KTP
-  SUDO_METHOD="Execute $BURNER with a non-interactive sudo"
-  sudo -n -- $XTERM -x $BURNER $IMAGE
-  if [ $? -eq 0 ]; then
-    write_message "Executing 'sudo' succeeded: $SUDO_METHOD"
-    return 0
-  else
-    write_message "Executing 'sudo' failed: $SUDO_METHOD"
-  fi
-
-  # Try using ssh-askpass without askpass helper path
-  SUDO_METHOD="Execute $BURNER with ssh-askpass-version of sudo (no helper given)"
-  sudo -A -- $XTERM -x $BURNER $IMAGE
-  if [ $? -eq 0 ]; then
-    write_message "Executing 'sudo' succeeded: $SUDO_METHOD"
-    return 0
-  else
-    write_message "Executing 'sudo' failed: $SUDO_METHOD"
-  fi
-
-  # Try using ssh-askpass with askpass helper path set
-  SUDO_METHOD="Execute $BURNER with ssh-askpass-version of sudo (using pre-set helper /usr/bin/ssh-askpass)"
-  SUDO_ASKPASS=/usr/bin/ssh-askpass sudo -A -- $XTERM -x $BURNER $IMAGE
-  if [ $? -eq 0 ]; then
-    write_message "Executing 'sudo' succeeded: $SUDO_METHOD"
-    return 0
-  else
-    write_message "Executing 'sudo' failed: $SUDO_METHOD"
-  fi
-
-  # Try asking user password - this is possibly insecure but should work in most environments
-  SUDO_METHOD="Execute $BURNER with getting user password using zenity and feedin it to sudo via STDIN"
-  zenity --password --title="$TITLE: Enter your password" | sudo -S -- $XTERM -x $BURNER $IMAGE
-  if [ $? -eq 0 ]; then
-    write_message "Executing 'sudo' succeeded: $SUDO_METHOD"
-    return 0
-  else
-    write_message "Executing 'sudo' failed: $SUDO_METHOD"
-  fi
-
-  # None of the methods gaining sudo access did not work
-  return 1
-}
-
-
+# Make sure we have Zenity
 if [ -z "`which zenity`" ]; then
   write_message "Please install zenity"
   show_popup "Please install zenity"
   exit 1
 fi
 
-XTERMPATH=$(get_xterm_path)
-if [ -z ${XTERMPATH} ]; then
-  write_message "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
-  show_popup "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
-  exit 1
+# Make sure we're running in a terminal
+if (( SHLVL > 1 )); then
+  # Start me again in a terminal
+  XTERMPATH=$(get_xterm_path)
+  if [ -z ${XTERMPATH} ]; then
+    write_message "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
+    show_popup "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
+    exit 1
+  fi
+
+  $XTERMPATH -x $0
+
+  exit 0
 fi
 
-if [ ! -x ${BURNER} ]; then
-  write_message "Please install burner script to $BURNER"
-  show_popup "Please install burner script to $BURNER"
-  exit 1
-fi
-
+# Find an initial path for the image file browser
 IMAGEPATH=${HOME}/*
 if [ -n "$(is_abitti_ktp)" ]; then
   if [ -d /media/usb1 ]; then
@@ -145,6 +100,7 @@ if [ -n "$(is_abitti_ktp)" ]; then
   fi
 fi
 
+# Select (and if required, unzip) the image file
 IMAGEFILE=
 while [ -z ${IMAGEFILE} ]; do
   IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .zip)| *.dd *.img *.zip"`
@@ -175,13 +131,9 @@ while [ -z ${IMAGEFILE} ]; do
   fi
 done
 
+# Main loop
 while [ true ]; do
-  execute_burner ${IMAGEFILE} ${XTERMPATH}
-  if [ $? -gt 0 ]; then
-    write_message "Failed to get superuser privileges"
-    show_popup "Failed to get superuser privileges. See system log for more information."
-    exit 1
-  fi
+  /usr/bin/pkexec /usr/local/lib/digabi-usb-monster/write_dd.py "$IMAGEFILE"
 
   zenity --question --title="$TITLE: Again?" --text="Write another set with same image file?" --cancel-label="Write again" --ok-label="Finish writing"
   if [ $? -ne 1 ]; then
