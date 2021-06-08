@@ -4,7 +4,8 @@ import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
 
 class dd_writer (object):
 	def __init__ (self):
-		self.DD_BLOCK_SIZE="8192"
+		# Large block size (5 Mb) works at least with small number of USB sticks
+		self.DD_BLOCK_SIZE="5242880"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
 		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
 		# Write timeout in seconds to cause status "timeout"
@@ -278,7 +279,7 @@ class dd_writer (object):
 		self.set_bytes_transferred(0)
 
 		self.dd_operation = "write"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
+		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s oflag=dsync' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Functions related to MD5 calculation
