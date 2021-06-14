@@ -35,7 +35,7 @@ deb: src/* clean
 	echo -n ${VERSION_FULL} >temp/VERSION_FULL.tmp
 
 	fpm -C temp/deb-root/ -s dir --name digabi-usb-monster --architecture all -t deb --version ${VERSION_FULL} \
-	  --description "USB monster is a zenity wrapper for dd-curses. This is the Python/Curses\nscript used by Matriculation Examination board to write massive amount of\nUSB sticks in short timeframe." \
+	  --description "Digabi USB monster is a Python/Curses script used by Matriculation Examination board to write massive amount of USB sticks in short timeframe." \
 	  --maintainer "abitti@ylioppilastutkinto.fi" \
 	  --vendor "Matriculation Examination Board" \
 	  --depends pv \
