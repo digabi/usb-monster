@@ -49,7 +49,7 @@ the `ENABLE_DOWNLOADER` value:
 
 ## Publising a new version
 
- 1. Update `src/VERSION`, push changes and wait GitHub Action "Build And Publish" to finish
+ 1. Update Changelog (below) and `src/VERSION`, push changes and wait GitHub Action "Build And Publish" to finish
  1. Go to [releases](https://github.com/digabi/usb-monster/releases). There should be a new draft release with a `.deb` file attached. Press the Edit button.
  1. Enter the new version number to "Tag version" field (e.g. "v1.6.0" - note the "v")
  1. Fill "Release title" Field
@@ -58,4 +58,11 @@ the `ENABLE_DOWNLOADER` value:
 
 ## Changelog
 
-Nothing here yet.
+### 1.1.0 A New Hope
+
+ * Open and write Etcher-style Abitti images
+ * Cron-based Abitti Downloader checks for new images every hour
+ * Write disk image with dd option `oflag=dsync` and 5M block size to increase accuracy of the write speed limit
+ * Removed USB-Monster specific repository in favour of YTL Linux repository
+ * Upgraded privilege escalation from `sudo` to `pkexec`
+ * Build `.deb` packages with GitHub Actions
