@@ -1,0 +1,7 @@
+# Abitti Downloader is part of digabi-usb-monster
+PATH=/usr/sbin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/local/bin:/usr/local/sbin
+BASH_ENV=/etc/default/abitti-downloader
+SHELL=/bin/bash
+
+# Download latest Abitti images every hour
+00 * * * * root if [ $ENABLE_DOWNLOADER != "" ]; then abitti-downloader; fi

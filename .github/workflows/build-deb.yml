@@ -1,0 +1,56 @@
+name: "Build And Publish"
+on: push
+jobs:
+  build_and_publish:
+    name: "Build And Publish usb-monster.deb"
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install prerequisite packages
+      run: |
+          sudo apt -y install ruby ruby-dev rubygems
+          sudo gem install --no-document fpm
+
+    - name: "Build USB-monster.deb"
+      run: make deb
+
+    - name: "Read complete version number"
+      id: version_full
+      uses: andstor/file-reader-action@v1
+      with:
+        path: "temp/VERSION_FULL.tmp"
+
+    - name: "Delete Existing Draft Releases"
+      run: python3 tools/github_purge_draft_releases.py $GITHUB_REPOSITORY ${{ secrets.GITHUB_TOKEN }}
+
+    - name: "Create Draft Release"
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: "AutomaticDraft"
+        release_name: ""
+        draft: true
+        prerelease: false
+
+    - name: "Upload digabi-usb-monster_VERSION_all.deb to Draft"
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
+        asset_name: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
+        asset_content_type: application/vnd.debian.binary-package
+
+    - name: "Upload digabi-usb-monster_latest_all.deb to Draft"
+      uses: actions/upload-release-asset@v1.0.1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: digabi-usb-monster_${{ steps.version_full.outputs.contents }}_all.deb
+        asset_name: digabi-usb-monster_latest_all.deb
+        asset_content_type: application/vnd.debian.binary-package

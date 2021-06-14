@@ -1,0 +1,135 @@
+#!/bin/bash
+
+TITLE=USB-monster
+
+show_popup () {
+  zenity_path=`which zenity`
+  if [ -n $zenity_path ]; then
+    zenity --info --title="$TITLE" --width=400 --text="$1"
+  fi
+}
+
+write_message () {
+  if [ -n "`which logger`" ]; then
+    logger "[$TITLE] $1"
+  fi
+
+  echo "$TITLE: $1" >&2
+}
+
+try_xterm () {
+  which $1
+}
+
+get_xterm_path () {
+  for this_xterm in $(which terminator) $(which xfce4-terminal)
+  do
+    if [ -x ${this_xterm} ]; then
+      write_message "Using ${this_xterm} as the X terminal emulator variant"
+      echo ${this_xterm}
+      return
+    fi
+  done
+
+  write_message "None of known X terminal emulator variants was found"
+}
+
+get_file_ext () {
+  EXTPATH=$1
+  EXTNAME=`basename ${EXTPATH}`
+  EXT=${EXTNAME##*.}
+  echo $EXT
+}
+
+unzip_etcher_zip () {
+  ETCHERZIP=$1
+  ETCHERZIPBASENAME=`basename $1`
+  ETCHERTEMP=`mktemp --tmpdir -d usb-monster-etcher.XXXXX`
+  unzip -qq ${ETCHERZIP} ytl/ktp.img ytl/koe.img -d ${ETCHERTEMP} \
+    | zenity --title="$TITLE" --text="Unpacking ${ETCHERZIPBASENAME}..." --no-cancel --progress --pulsate --auto-close
+  ETCHERZIPIMAGE=`find ${ETCHERTEMP} | grep .img`
+
+  if [ -z "${ETCHERZIPIMAGE}" ]
+  then
+    # File does not contain valid image file
+    echo
+  else
+    ETCHERIMAGE=`mktemp --tmpdir usb-monster.XXXXX`
+    mv ${ETCHERZIPIMAGE} ${ETCHERIMAGE}
+    rm -fR ${ETCHERTEMP}
+    echo ${ETCHERIMAGE}
+  fi
+}
+
+
+# Make sure we have Zenity
+if [ -z "`which zenity`" ]; then
+  write_message "Please install zenity"
+  show_popup "Please install zenity"
+  exit 1
+fi
+
+# Make sure we're running in a terminal
+if (( SHLVL > 1 )); then
+  # Start me again in a terminal
+  XTERMPATH=$(get_xterm_path)
+  if [ -z ${XTERMPATH} ]; then
+    write_message "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
+    show_popup "Please install a supported x-terminal-emulator (terminator or xfce4-terminal)"
+    exit 1
+  fi
+
+  $XTERMPATH -x $0
+
+  exit 0
+fi
+
+# Find an initial path for the image file browser
+IMAGEPATH=${HOME}/*
+if [ -d /opt/abitti-images ]; then
+  # We have a path created by Abitti Downloader
+  IMAGEPATH=/opt/abitti-images/*
+fi
+
+# Select (and if required, unzip) the image file
+IMAGEFILE=
+while [ -z ${IMAGEFILE} ]; do
+  IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .zip)| *.dd *.img *.zip"`
+
+  if [ -z ${IMAGEFILE} ]; then
+    write_message "Cancelled!"
+    show_popup "Cancelled!"
+    exit 0
+  fi
+
+  IMAGE_EXT=`get_file_ext ${IMAGEFILE}`
+
+  if [ "${IMAGE_EXT}" = "zip" ]; then
+    write_message "User selected .zip file, trying to extract Etcher zip"
+    UNZIPPED_IMAGEFILE=`unzip_etcher_zip ${IMAGEFILE}`
+    if [ -z "${UNZIPPED_IMAGEFILE}" ]; then
+      write_message "File ${IMAGEFILE} does not contain MEB image file"
+      show_popup "File ${IMAGEFILE} does not contain MEB image file"
+      exit 1
+    fi
+    IMAGEFILE="${UNZIPPED_IMAGEFILE}"
+  fi
+
+  if [ ! -r ${IMAGEFILE} ]; then
+    write_message "File $IMAGEFILE is not readable. Exiting."
+    show_popup "File $IMAGEFILE is not readable. Exiting."
+    exit 1
+  fi
+done
+
+# Main loop
+while [ true ]; do
+  /usr/bin/pkexec /usr/local/lib/digabi-usb-monster/write_dd.py "$IMAGEFILE"
+
+  zenity --question --title="$TITLE: Again?" --text="Write another set with same image file?" --cancel-label="Write again" --ok-label="Finish writing"
+  if [ $? -ne 1 ]; then
+    # Normal termination
+    write_message "Normal termination"
+    exit 0
+  fi
+done

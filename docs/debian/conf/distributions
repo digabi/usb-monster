@@ -1,8 +1,0 @@
-Origin: abitti-local.fi
-Label: apt repository
-Codename: stable
-Architectures: i386 amd64
-Components: contrib
-Description: Abitti USB-monster repo
-SignWith: 0EEA516CC168C3078D93CEAEF0CB5A7157202474
-Pull: stable
