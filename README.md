@@ -12,7 +12,10 @@ to download and unzip latest Abitti image files.
 
 ## Installing USB-monster
 
-USB-monster can be installed to recent versions of Debian and Ubuntu.
+USB-monster can be installed to recent versions of Debian and Ubuntu. The recommended
+way to install is described in the [YTL Linux README](https://github.com/digabi/ytl-linux/blob/main/README.md).
+
+However, you can install the latest package from the release page:
 
  1. Get the latest `.deb` from [release page](https://github.com/digabi/usb-monster/releases)
  1. Install: `sudo apt install ./digabi-usb-monster_X.X.X_all.deb`
