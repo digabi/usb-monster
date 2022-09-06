@@ -1,4 +1,4 @@
-#!/usr/bin/python2
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import curses, re, sys, os, time, shlex, subprocess, argparse
@@ -127,12 +127,12 @@ def get_writer_status_coords (writer_n):
 	screen_size = get_window_size_xy()
 
 	col_height = screen_size['y']-3
-	col_width = screen_size['x']/2
+	col_width = int(screen_size['x']/2)
 
-	column = (writer_n-1) / col_height
+	column = int((writer_n-1) / col_height)
 	row = (writer_n-1) % col_height
 
-	return { 'x': column * col_width, 'y': row+2 }
+	return { 'x': int(column * col_width), 'y': int(row+2) }
 
 def update_writer_status (my_writers, current_usbs = None):
 	writer_count = 0
@@ -221,7 +221,7 @@ def update_message (new_message):
 # Main program
 
 if not is_root():
-	print "You have to be root to run this.\n"
+	print("You have to be root to run this.\n")
 	sys.exit(1)
 
 # Check parameters

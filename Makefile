@@ -39,8 +39,8 @@ deb: src/* clean
 	  --maintainer "abitti@ylioppilastutkinto.fi" \
 	  --vendor "Matriculation Examination Board" \
 	  --depends pv \
-	  --depends python \
-	  --depends python-psutil \
+	  --depends python3 \
+	  --depends python3-psutil \
 	  --depends "terminator | xfce4-terminal" \
 	  --depends zenity \
 	  --depends unzip \

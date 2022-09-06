@@ -33,20 +33,20 @@ Example:
  * Calculates a MD5 sum for the given dd image file and stores it to same directory with the image
  * Writes given dd image to all USB media
  * Verifies the dd image from the USB media to the calculated MD5
+ * If you need some debugging set `USB_MONSTER_DD_WRITER_DEBUG=1`, e.g. `sudo -E ./write_dd.py /tmp/test-image.dd` (see `src/dd_writer.py` for details)
 
 These actions are carried out to all detected USB devices which do not have
 any mounted filesystems.
 
 Example:
 
-`sudo python2 ./write_dd.py /path/to/image.dd`
+`sudo python3 ./write_dd.py /path/to/image.dd`
 
 ## Requirements
 
-dd, md5sum, head, python 2.7, readlink, python `psutil`
+dd, md5sum, head, python 3, readlink, python `psutil`
 
 Must be executed as superuser.
 
 Required packages:
- * Arch Linux: alsa-utils, pv, python2, python2-psutil
- * Debian Jessie: coreutils, alsa-utils, pv, python2.7-minimal, python-psutil
+ * Debian Bullseye: coreutils, pv, python3, python3-psutil
