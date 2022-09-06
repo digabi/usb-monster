@@ -93,6 +93,7 @@ fi
 
 # Select (and if required, unzip) the image file
 IMAGEFILE=
+TEMPORARY_IMAGEFILE=
 while [ -z ${IMAGEFILE} ]; do
   IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .zip)| *.dd *.img *.zip"`
 
@@ -113,6 +114,7 @@ while [ -z ${IMAGEFILE} ]; do
       exit 1
     fi
     IMAGEFILE="${UNZIPPED_IMAGEFILE}"
+    TEMPORARY_IMAGEFILE="${UNZIPPED_IMAGEFILE}"
   fi
 
   if [ ! -r ${IMAGEFILE} ]; then
@@ -128,6 +130,10 @@ while [ true ]; do
 
   zenity --question --title="$TITLE: Again?" --text="Write another set with same image file?" --cancel-label="Write again" --ok-label="Finish writing"
   if [ $? -ne 1 ]; then
+    if [ ! -z "$TEMPORARY_IMAGEFILE" ]; then
+      rm $TEMPORARY_IMAGEFILE
+    fi
+    
     # Normal termination
     write_message "Normal termination"
     exit 0
