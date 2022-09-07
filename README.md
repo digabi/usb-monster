@@ -61,6 +61,11 @@ the `ENABLE_DOWNLOADER` value:
 
 ## Changelog
 
+### 1.2.0 The Last Stick
+
+ * Runs on Python 3 instead of Python 2 for an easier install to Ubuntu 22.04
+ * Remove temporary raw image files on exit
+
 ### 1.1.0 A New Hope
 
  * Open and write Etcher-style Abitti images

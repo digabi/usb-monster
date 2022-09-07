@@ -1,3 +1,4 @@
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
 import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
@@ -7,11 +8,15 @@ class dd_writer (object):
 		# Large block size (5 Mb) works at least with small number of USB sticks
 		self.DD_BLOCK_SIZE="5242880"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
-		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '^([0-9a-f]+) ' }
+		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '([0-9a-f]{32}) ' }
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
 		# Raise "slow" flag if average speed bytes/second is less than this
 		self.SLOW = 1*1024*1024 # 1 MiB/s
+		# Debug environment variable name, see write_debug()
+		self.DEBUG_ENVIRONMENT_VAR = 'USB_MONSTER_DD_WRITER_DEBUG'
+		# Debug filename, see write_debug()
+		self.DEBUG_FILE_PATH = '/tmp/dd_writer_debug.txt'
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
 		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
@@ -37,6 +42,19 @@ class dd_writer (object):
 		self.slow_bytestransferred_timestamp = None
 
 		self.MD5EXT = '.md5'
+
+	def write_debug(self, debug_arguments):
+		debug_setting = False
+		try:
+			debug_setting = os.environ[self.DEBUG_ENVIRONMENT_VAR]
+		except KeyError:
+			pass
+
+		if debug_setting:
+			f = open(self.DEBUG_FILE_PATH, "a")
+			f.write(str(debug_arguments))
+			f.write("\n")
+			f.close()
 
 	def set_verify(self, new_verify_image_value):
 		self.verify_image = new_verify_image_value
@@ -110,9 +128,11 @@ class dd_writer (object):
 
 				if self.dd_previous_stdout != None:
 					if self.dd_previous_stdout == self.dd_image_md5:
+						self.write_debug(['verify ok', self.dd_previous_stdout, self.dd_image_md5])
 						# Verify ok, finished
 						self.status_code = 3
 					else:
+						self.write_debug(['verify failed', self.dd_previous_stdout, self.dd_image_md5])
 						# Verify error
 						self.status_code = 5
 				else:
@@ -170,6 +190,7 @@ class dd_writer (object):
 
 		for this_re in self.RE_OUTPUT.keys():
 			result_dict[this_re] = ""
+			self.write_debug(['exctract_dd_data', this_re, self.RE_OUTPUT[this_re], output])
 			re_result = re.search(self.RE_OUTPUT[this_re], output)
 			if re_result:
 				result_dict[this_re] = re_result.group(1)
@@ -280,6 +301,7 @@ class dd_writer (object):
 
 		self.dd_operation = "write"
 		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | pv -n -b | dd of=%s bs=%s oflag=dsync' % (file_path, self.DD_BLOCK_SIZE, self.device_file, self.DD_BLOCK_SIZE) ]
+		self.write_debug(['writing', dd_params])
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Functions related to MD5 calculation
@@ -329,6 +351,7 @@ class dd_writer (object):
 
 		self.dd_operation = "verify"
 		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -n -b | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
+		self.write_debug(['verifying', dd_params])
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
 	## Miscellaneous helpers
