@@ -228,6 +228,7 @@ if not is_root():
 parser = argparse.ArgumentParser(prog='write_dd', description='Write disk images to several block devices with dd.')
 parser.add_argument("image_path", help="Path to raw image file to write")
 parser.add_argument("-n", "--noverify", help="Skip verifying final images", action="store_true")
+parser.add_argument("-u", "--uid", help="Set UID should own all temporary files", type=int)
 args = parser.parse_args()
 
 # Start curses environment
@@ -256,7 +257,7 @@ while True:
 	update_message("Creating writers...")
 	for this_usb in all_usbs:
 		# Create writers for all USB devices
-		writers[this_usb] = dd_writer()
+		writers[this_usb] = dd_writer(args.uid)
 
 	# Update screen
 	update_writer_status(writers)
