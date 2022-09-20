@@ -4,7 +4,7 @@
 import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
 
 class dd_writer (object):
-	def __init__ (self):
+	def __init__ (self, temp_file_uid = None):
 		# Large block size (5 Mb) works at least with small number of USB sticks
 		self.DD_BLOCK_SIZE="5242880"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
@@ -20,6 +20,8 @@ class dd_writer (object):
 
 		# Use this dictionary to create disk errors (write other image to certain devices), see write_image()
 		#self.ALTERNATIVE_IMAGE = { '/dev/sdc': 'dd_writer.py' }
+
+		self.temp_file_uid = temp_file_uid
 
 		self.image_file = None
 		self.device_file = None
@@ -328,6 +330,9 @@ class dd_writer (object):
 		f = open(md5_filename, "w")
 		f.write("%s\n" % md5str)
 		f.close()
+
+		if self.temp_file_uid is not None:
+			os.chown(md5_filename, self.temp_file_uid, -1)
 
 	def calculate_md5(self, filename, blocksize=2**20):
 		m = hashlib.md5()

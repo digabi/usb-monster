@@ -125,13 +125,16 @@ while [ -z ${IMAGEFILE} ]; do
 done
 
 # Main loop
+uid=`id -u`
 while [ true ]; do
-  /usr/bin/pkexec /usr/local/lib/digabi-usb-monster/write_dd.py "$IMAGEFILE"
+  /usr/bin/pkexec /usr/local/lib/digabi-usb-monster/write_dd.py "$IMAGEFILE" --uid=$uid
 
   zenity --question --title="$TITLE: Again?" --text="Write another set with same image file?" --cancel-label="Write again" --ok-label="Finish writing"
   if [ $? -ne 1 ]; then
     if [ ! -z "$TEMPORARY_IMAGEFILE" ]; then
       rm $TEMPORARY_IMAGEFILE
+
+      rm -f $TEMPORARY_IMAGEFILE.md5
     fi
     
     # Normal termination
