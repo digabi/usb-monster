@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-import subprocess, signal, select, re, fcntl, os, hashlib, time, psutil, stat
+import subprocess, signal, select, stat, re, fcntl, os, hashlib, time, psutil, stat
 
 class dd_writer (object):
 	def __init__ (self, temp_file_uid = None):
@@ -332,7 +332,15 @@ class dd_writer (object):
 		f.close()
 
 		if self.temp_file_uid is not None:
-			os.chown(md5_filename, self.temp_file_uid, -1)
+			try:
+				os.chmod(md5_filename, stat.S_IRUSR | stat.S_IWUSR)
+			except Exception as e:
+				self.write_debug(["Error: Could not change MD5 file permissions", md5_filename, str(e)])
+
+			try:
+				os.chown(md5_filename, self.temp_file_uid, -1)
+			except Exception as e:
+				self.write_debug(["Error: Could not change MD5 file owner", md5_filename, str(e)])
 
 	def calculate_md5(self, filename, blocksize=2**20):
 		m = hashlib.md5()

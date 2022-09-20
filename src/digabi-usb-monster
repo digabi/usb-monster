@@ -44,20 +44,18 @@ get_file_ext () {
 unzip_etcher_zip () {
   ETCHERZIP=$1
   ETCHERZIPBASENAME=`basename $1`
-  ETCHERTEMP=`mktemp --tmpdir -d usb-monster-etcher.XXXXX`
-  unzip -qq ${ETCHERZIP} ytl/ktp.img ytl/koe.img -d ${ETCHERTEMP} \
+  ETCHERZIPIMAGE=`mktemp --tmpdir usb-monster-temp-image.XXXXX`
+  unzip -qq -c ${ETCHERZIP} ytl/ktp.img ytl/koe.img \
+    | dd of=${ETCHERZIPIMAGE} 2>&1 \
     | zenity --title="$TITLE" --text="Unpacking ${ETCHERZIPBASENAME}..." --no-cancel --progress --pulsate --auto-close
-  ETCHERZIPIMAGE=`find ${ETCHERTEMP} | grep .img`
 
-  if [ -z "${ETCHERZIPIMAGE}" ]
+  if [ -s "${ETCHERZIPIMAGE}" ]
   then
-    # File does not contain valid image file
-    echo
+    # File has content so it is probably a valid image file
+    echo ${ETCHERZIPIMAGE}
   else
-    ETCHERIMAGE=`mktemp --tmpdir usb-monster.XXXXX`
-    mv ${ETCHERZIPIMAGE} ${ETCHERIMAGE}
-    rm -fR ${ETCHERTEMP}
-    echo ${ETCHERIMAGE}
+    # File has no content
+    echo
   fi
 }
 
