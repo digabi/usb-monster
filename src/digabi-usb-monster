@@ -45,7 +45,7 @@ unzip_etcher_zip () {
   ETCHERZIP=$1
   ETCHERZIPBASENAME=`basename $1`
   ETCHERZIPIMAGE=`mktemp --tmpdir usb-monster-temp-image.XXXXX`
-  unzip -qq -c ${ETCHERZIP} ytl/ktp.img ytl/koe.img \
+  unzip -qq -p ${ETCHERZIP} ytl/ktp.img ytl/koe.img \
     | dd of=${ETCHERZIPIMAGE} 2>&1 \
     | zenity --title="$TITLE" --text="Unpacking ${ETCHERZIPBASENAME}..." --no-cancel --progress --pulsate --auto-close
 
