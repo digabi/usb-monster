@@ -52,8 +52,9 @@ get_just_hash_part () {
 
 unzip_etcher_zip () {
   ETCHERZIP=$1
+  VERSION_STRING=$2
   ETCHERZIPBASENAME=`basename $1`
-  ETCHERZIPIMAGE=`mktemp --tmpdir usb-monster-temp-image.XXXXX`
+  ETCHERZIPIMAGE=`mktemp --tmpdir usb-monster-temp-image.${VERSION_STRING}.XXXXX`
   unzip -qq -p ${ETCHERZIP} ytl/ktp.img ytl/koe.img \
     | dd of=${ETCHERZIPIMAGE} 2>&1 \
     | zenity --title="$TITLE" --text="Unpacking ${ETCHERZIPBASENAME}..." --no-cancel --progress --pulsate --auto-close
@@ -66,6 +67,17 @@ unzip_etcher_zip () {
     # File has no content
     echo
   fi
+}
+
+get_etcher_zip_version_string () {
+  ETCHERZIP=$1
+  ETCHERZIP_METAFILE=`mktemp --tmpdir usb-monster-temp-meta-file.XXXXX`
+  unzip -qq -p ${ETCHERZIP} ytl/.meta/manifest.json \
+    | dd of=${ETCHERZIP_METAFILE} 2>&1 \
+    | zenity --title="$TITLE" --text="Extracting image version..." --no-cancel --progress --pulsate --auto-close
+  
+  echo `cat ${ETCHERZIP_METAFILE} | grep '"name"' | sed 's/.*name": "\(.\+\)".*/\1/' | sed 's/[^A-Z0-9]//g'`
+  rm ${ETCHERZIP_METAFILE}
 }
 
 get_etcher_zip_image_hash_expected () {
@@ -135,7 +147,10 @@ while [ -z ${IMAGEFILE} ]; do
 
   if [ "${IMAGE_EXT}" = "zip" ]; then
     write_message "User selected .zip file, trying to extract Etcher zip"
-    UNZIPPED_IMAGEFILE=`unzip_etcher_zip ${IMAGEFILE}`
+
+    VERSION_STRING=`get_etcher_zip_version_string ${IMAGEFILE}`
+
+    UNZIPPED_IMAGEFILE=`unzip_etcher_zip ${IMAGEFILE} ${VERSION_STRING}`
     if [ -z "${UNZIPPED_IMAGEFILE}" ]; then
       write_message "File ${IMAGEFILE} does not contain MEB image file"
       show_popup "File ${IMAGEFILE} does not contain MEB image file"
@@ -148,6 +163,7 @@ while [ -z ${IMAGEFILE} ]; do
     if [ "${UNZIPPED_IMAGEFILE_HASH_EXPECTED}" != "${UNZIPPED_IMAGEFILE_HASH_OBSERVED}" ]; then
       write_message "File hash mismatch, expected: '${UNZIPPED_IMAGEFILE_HASH_EXPECTED}' observed: '${UNZIPPED_IMAGEFILE_HASH_OBSERVED}'"
       show_popup "Extracted file does not pass checksum test. Exiting."
+      rm ${UNZIPPED_IMAGEFILE}
       exit 1
     fi
 
