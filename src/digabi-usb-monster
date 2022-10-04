@@ -41,6 +41,15 @@ get_file_ext () {
   echo $EXT
 }
 
+get_just_hash_part () {
+  # "417e0869e1f7faf554fbdd8d3e5e9f5dc6bb9625b44551518077c925598b5527  koe.img"
+  # becomes
+  # "417e0869e1f7faf554fbdd8d3e5e9f5dc6bb9625b44551518077c925598b5527"
+
+  HASH_FILE=$1
+  echo `cat $1 | sed -e 's/\s\+.\+\$//'`
+}
+
 unzip_etcher_zip () {
   ETCHERZIP=$1
   ETCHERZIPBASENAME=`basename $1`
@@ -59,6 +68,27 @@ unzip_etcher_zip () {
   fi
 }
 
+get_etcher_zip_image_hash_expected () {
+  ETCHERZIP=$1
+  ETCHERZIPHASHFILE=`mktemp --tmpdir usb-monster-temp-image-hash.XXXXX`
+  unzip -qq -p ${ETCHERZIP} ytl/koe.img.sha256 ytl/ktp.img.sha256 \
+    | dd of=${ETCHERZIPHASHFILE} 2>&1 \
+    | zenity --title="$TITLE" --text="Extracting image checksum..." --no-cancel --progress --pulsate --auto-close
+  
+  get_just_hash_part ${ETCHERZIPHASHFILE}
+  rm ${ETCHERZIPHASHFILE}
+}
+
+get_etcher_zip_image_hash_observed () {
+  IMAGEFILE=$1
+  HASH_OUTPUT=`mktemp --tmpdir usb-monster-temp-image-hash.XXXXX`
+  sha256sum ${IMAGEFILE} \
+    | dd of=${HASH_OUTPUT} 2>&1 \
+    | zenity --title="$TITLE" --text="Calculating image checksum..." --no-cancel --progress --pulsate --auto-close
+  
+  get_just_hash_part ${HASH_OUTPUT}
+  rm ${HASH_OUTPUT}
+}
 
 # Make sure we have Zenity
 if [ -z "`which zenity`" ]; then
@@ -111,6 +141,16 @@ while [ -z ${IMAGEFILE} ]; do
       show_popup "File ${IMAGEFILE} does not contain MEB image file"
       exit 1
     fi
+
+    UNZIPPED_IMAGEFILE_HASH_EXPECTED=`get_etcher_zip_image_hash_expected ${IMAGEFILE}`
+    UNZIPPED_IMAGEFILE_HASH_OBSERVED=`get_etcher_zip_image_hash_observed ${UNZIPPED_IMAGEFILE}`
+
+    if [ "${UNZIPPED_IMAGEFILE_HASH_EXPECTED}" != "${UNZIPPED_IMAGEFILE_HASH_OBSERVED}" ]; then
+      write_message "File hash mismatch, expected: '${UNZIPPED_IMAGEFILE_HASH_EXPECTED}' observed: '${UNZIPPED_IMAGEFILE_HASH_OBSERVED}'"
+      show_popup "Extracted file does not pass checksum test. Exiting."
+      exit 1
+    fi
+
     IMAGEFILE="${UNZIPPED_IMAGEFILE}"
     TEMPORARY_IMAGEFILE="${UNZIPPED_IMAGEFILE}"
   fi
