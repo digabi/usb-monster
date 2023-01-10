@@ -61,6 +61,13 @@ the `ENABLE_DOWNLOADER` value:
 
 ## Changelog
 
+### 1.2.1 Attack of the Cloned Sticks
+
+ * Show ABITTI/SERVER version string in temporary image file name when using Etcher-style image files
+ * Very integrity of the unzipped Etcher-style image
+ * Make temporary raw image files readable only to the current user
+ * Remove MD5 hashes of temporary raw image files
+
 ### 1.2.0 The Last Stick
 
  * Runs on Python 3 instead of Python 2 for an easier install to Ubuntu 22.04
