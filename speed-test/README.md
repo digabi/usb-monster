@@ -7,6 +7,9 @@ base distro as its USB stack appears to be solid on our hardware.
 The script `testi_2017.sh` was used summer 2017 and it contains only the `dd` part of the
 2016 test.
 
+There is practically no differences between `testi_2017.sh` and `testi_2024.sh`. The latter
+was used in tendering process 2024.
+
 You need to install fio (`pacman -S fio`).
 
 Following figures were used (this is a sample output):
