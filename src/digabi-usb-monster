@@ -135,7 +135,7 @@ fi
 IMAGEFILE=
 TEMPORARY_IMAGEFILE=
 while [ -z ${IMAGEFILE} ]; do
-  IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .zip)| *.dd *.img *.zip"`
+  IMAGEFILE=`zenity --file-selection --filename=${IMAGEPATH} --title="$TITLE: Select Image File" --file-filter="Image file (.dd, .img, .iso, .zip)| *.dd *.img *.iso *.zip"`
 
   if [ -z ${IMAGEFILE} ]; then
     write_message "Cancelled!"
