@@ -44,6 +44,8 @@ fi
 
 echo "--Lineaarinen kirjoitusnopeus ${TIKKU}" >>${LOG}
 dd if=/dev/zero of=${DEV} bs=1M count=2000 >>${LOG} 2>>${LOG}
+echo "--Lineaarinen lukunopeus ${TIKKU}" >>${LOG}
+dd if=${DEV} of=/dev/null bs=1M count=2000 >>${LOG} 2>>${LOG}
 
 NOW=`date`
 echo "--Testi valmis ${NOW} ${TIKKU}" >>${LOG}
