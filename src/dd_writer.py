@@ -8,7 +8,7 @@ class dd_writer (object):
 		# Large block size (5 Mb) works at least with small number of USB sticks
 		self.DD_BLOCK_SIZE="5242880"
 		self.STATUS_CODE_LEGEND = ['-', 'writing', 'verifying', 'finished', 'error', 'failed', 'timeout', '(timeout)', 'slow', '(slow)']
-		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'md5sum': '([0-9a-f]{32}) ' }
+		self.RE_OUTPUT = { 'bytes_transferred': '(\d+)', 'hash': '([0-9a-f]{64}) ' }
 		# Write timeout in seconds to cause status "timeout"
 		self.TIMEOUT = 20
 		# Raise "slow" flag if average speed bytes/second is less than this
@@ -27,7 +27,7 @@ class dd_writer (object):
 		self.device_file = None
 		self.verify_image = True
 		self.dd_image_size = None
-		self.dd_image_md5 = None
+		self.dd_image_hash = None
 
 		self.status_code = 0
 		self.dd_handle = None
@@ -43,7 +43,7 @@ class dd_writer (object):
 		self.slow_bytestransferred = None
 		self.slow_bytestransferred_timestamp = None
 
-		self.MD5EXT = '.md5'
+		self.HASHEXT = '.sha256'
 
 	def write_debug(self, debug_arguments):
 		debug_setting = False
@@ -115,7 +115,7 @@ class dd_writer (object):
 				# Write finished
 				if self.verify_image:
 					# Start verify
-					self.check_md5(self.image_file, self.device_file)
+					self.check_hash(self.image_file, self.device_file)
 					self.status_code = 2
 				else:
 					# Verify is disabled - finish write
@@ -123,18 +123,18 @@ class dd_writer (object):
 					self.dd_operation = "verify"
 					self.status_code = 3
 			elif self.dd_operation == "verify":
-				# Verify finished, check MD5
+				# Verify finished, check hash
 
-				# Read last message (should be MD5sum)
+				# Read last message (should be hash)
 				self.get_dd_status()
 
 				if self.dd_previous_stdout != None:
-					if self.dd_previous_stdout == self.dd_image_md5:
-						self.write_debug(['verify ok', self.dd_previous_stdout, self.dd_image_md5])
+					if self.dd_previous_stdout == self.dd_image_hash:
+						self.write_debug(['verify ok', self.dd_previous_stdout, self.dd_image_hash])
 						# Verify ok, finished
 						self.status_code = 3
 					else:
-						self.write_debug(['verify failed', self.dd_previous_stdout, self.dd_image_md5])
+						self.write_debug(['verify failed', self.dd_previous_stdout, self.dd_image_hash])
 						# Verify error
 						self.status_code = 5
 				else:
@@ -206,10 +206,10 @@ class dd_writer (object):
 		# Read stdout_line
 		stdout_line = self.non_block_read(self.dd_handle.stdout)
 		if (stdout_line != ""):
-			# Try to get MD5sum
+			# Try to get hash
 			stdout_data = self.extract_dd_data(stdout_line)
-			if stdout_data['md5sum'] != "":
-				self.dd_previous_stdout = stdout_data['md5sum']
+			if stdout_data['hash'] != "":
+				self.dd_previous_stdout = stdout_data['hash']
 			else:
 				self.dd_previous_stdout = stdout_line
 
@@ -306,44 +306,44 @@ class dd_writer (object):
 		self.write_debug(['writing', dd_params])
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
-	## Functions related to MD5 calculation
+	## Functions related to hash calculation
 
-	def read_md5_file (self, filename):
-		md5_filename = "%s%s" % (filename, self.MD5EXT)
+	def read_hash_file (self, filename):
+		hash_filename = "%s%s" % (filename, self.HASHEXT)
 
-		if (os.access(md5_filename, os.F_OK)):
-			f = open(md5_filename, "r")
-			file_md5 = f.readline().rstrip()
+		if (os.access(hash_filename, os.F_OK)):
+			f = open(hash_filename, "r")
+			file_hash = f.readline().rstrip()
 			f.close()
 
-			md5_re = re.search(r'^([0-9a-f]+) ', file_md5)
-			if md5_re:
-				file_md5 = md5_re.group(1)
+			hash_re = re.search(r'^([0-9a-f]+) ', file_hash)
+			if hash_re:
+				file_hash = hash_re.group(1)
 
-			return file_md5
+			return file_hash
 
 		return None
 
-	def write_md5_file (self, filename, md5str):
-		md5_filename = "%s%s" % (filename, self.MD5EXT)
+	def write_hash_file (self, filename, hash):
+		hash_filename = "%s%s" % (filename, self.HASHEXT)
 
-		f = open(md5_filename, "w")
-		f.write("%s\n" % md5str)
+		f = open(hash_filename, "w")
+		f.write("%s\n" % hash)
 		f.close()
 
 		if self.temp_file_uid is not None:
 			try:
-				os.chmod(md5_filename, stat.S_IRUSR | stat.S_IWUSR)
+				os.chmod(hash_filename, stat.S_IRUSR | stat.S_IWUSR)
 			except Exception as e:
-				self.write_debug(["Error: Could not change MD5 file permissions", md5_filename, str(e)])
+				self.write_debug(["Error: Could not change hash file permissions", hash_filename, str(e)])
 
 			try:
-				os.chown(md5_filename, self.temp_file_uid, -1)
+				os.chown(hash_filename, self.temp_file_uid, -1)
 			except Exception as e:
-				self.write_debug(["Error: Could not change MD5 file owner", md5_filename, str(e)])
+				self.write_debug(["Error: Could not change hash file owner", hash_filename, str(e)])
 
-	def calculate_md5(self, filename, blocksize=2**20):
-		m = hashlib.md5()
+	def calculate_hash(self, filename, blocksize=2**20):
+		m = hashlib.sha256()
 		with open(filename , "rb" ) as f:
 			while True:
 				buf = f.read(blocksize)
@@ -352,18 +352,18 @@ class dd_writer (object):
 				m.update( buf )
 		return m.hexdigest()
 
-	def check_md5(self, filename, diskname):
-		# Get MD5 of the filename
-		self.dd_image_md5 = self.read_md5_file(filename)
-		if self.dd_image_md5 == None:
-			self.dd_image_md5 = self.calculate_md5(filename)
-			self.write_md5_file(filename, self.dd_image_md5)
+	def check_hash(self, filename, diskname):
+		# Get hash of the filename
+		self.dd_image_hash = self.read_hash_file(filename)
+		if self.dd_image_hash == None:
+			self.dd_image_hash = self.calculate_hash(filename)
+			self.write_hash_file(filename, self.dd_image_hash)
 
 		# Zero bytes processed
 		self.set_bytes_transferred(0)
 
 		self.dd_operation = "verify"
-		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -n -b | md5sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
+		dd_params = ['/bin/sh', '-c', 'dd if=%s bs=%s | head -c %d | pv -n -b | sha256sum' % (diskname, self.DD_BLOCK_SIZE, self.dd_image_size) ]
 		self.write_debug(['verifying', dd_params])
 		self.dd_handle = subprocess.Popen(dd_params, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 

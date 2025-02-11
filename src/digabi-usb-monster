@@ -188,7 +188,7 @@ while [ true ]; do
     if [ ! -z "$TEMPORARY_IMAGEFILE" ]; then
       rm $TEMPORARY_IMAGEFILE
 
-      rm -f $TEMPORARY_IMAGEFILE.md5
+      rm -f $TEMPORARY_IMAGEFILE.sha256
     fi
     
     # Normal termination
