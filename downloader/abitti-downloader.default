@@ -1,4 +1,4 @@
 # Abitti Downloader is part of digabi-usb-monster
 
-# To disable automatic Abitti download comment following line or set value to empty
-ENABLE_DOWNLOADER=1
+# To enable automatic Abitti download remove comment from next line
+#ENABLE_DOWNLOADER=1
