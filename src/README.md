@@ -32,7 +32,7 @@ Example:
 `write_dd.py`
  * Calculates a MD5 sum for the given dd image file and stores it to same directory with the image
  * Writes given dd image to all USB media
- * Verifies the dd image from the USB media to the calculated MD5
+ * Verifies the dd image from the USB media to the calculated SHA256
  * If you need some debugging set `USB_MONSTER_DD_WRITER_DEBUG=1`, e.g. `sudo -E ./write_dd.py /tmp/test-image.dd` (see `src/dd_writer.py` for details)
 
 These actions are carried out to all detected USB devices which do not have
@@ -44,7 +44,7 @@ Example:
 
 ## Requirements
 
-dd, md5sum, head, python 3, readlink, python `psutil`
+dd, sha256sum, head, python 3, readlink, python `psutil`
 
 Must be executed as superuser.
 
