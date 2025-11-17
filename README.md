@@ -61,6 +61,12 @@ the `ENABLE_DOWNLOADER` value:
 
 ## Changelog
 
+### 1.2.2 The Stick Awakens
+
+ * Abitti image downloader (see `/etc/default/abitti-downloader`) is disabled by default
+ * Image file dialog accepts `.iso` files
+ * Use SHA256 instead of MD5 to verify disk integrity because of known limitations of MD5
+
 ### 1.2.1 Attack of the Cloned Sticks
 
  * Show ABITTI/SERVER version string in temporary image file name when using Etcher-style image files
