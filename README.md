@@ -13,12 +13,67 @@ to download and unzip latest Abitti image files.
 ## Installing USB-monster
 
 USB-monster can be installed to recent versions of Debian and Ubuntu. The recommended
-way to install is described in the [YTL Linux README](https://github.com/digabi/ytl-linux/blob/main/README.md).
+way to install is with [YTL Linux](https://github.com/digabi/ytl-linux).
+
+### Using USB-monster with YTL Linux
+
+Install USB-monster:
+```
+sudo apt update && sudo apt install digabi-usb-monster
+```
+
+The default behaviour of Cinnamon (thus, YTL Linux) is to automount all USB memories inserted into
+the workstation. Before starting to use USB Monster this feature should be disabled by entering
+following commands:
+
+```
+gsettings set org.cinnamon.desktop.media-handling automount-open false
+gsettings set org.cinnamon.desktop.media-handling automount false
+```
+
+These commands are per-user so your Abitti server user (e.g. the default `school`) can have the automount
+on while the USB-monster user may have the automount turned off. 
+
+### Install USB-monster without YTL Linux
+
+Here are the steps to install USB Monster to your non-YTL Linux deb-based distro:
+ * Import the key: \
+   `wget -qO- https://linux.abitti.fi/apt-signing-key.pub | sudo tee /etc/apt/trusted.gpg.d/ytl-linux.asc`
+ * Add our repo to your sources: \
+   `sudo bash -c 'echo "deb https://linux.abitti.fi/deb ytl-linux main" >/etc/apt/sources.list.d/usbmonster.list'`
+ * Update your packages and install: \
+   `sudo apt update && sudo apt install digabi-usb-monster`
+
+After this your USB Monster will be updated automatically.
+
+If you have added the signing key with legacy `apt-key` tool and get `Key is stored in legacy trusted.gpg keyring` errors
+you can change the location of the key with following procedure:
+
+```
+$ sudo apt-key del "19A4 3050 953F DEC0 F0D6  2C81 1B26 415C 1E66 6A78"
+Warning: apt-key is deprecated. Manage keyring files in trusted.gpg.d instead (see apt-key(8)).
+OK
+$ wget -qO- https://linux.abitti.fi/apt-signing-key.pub | sudo tee /etc/apt/trusted.gpg.d/ytl-linux.asc
+-----BEGIN PGP PUBLIC KEY BLOCK-----
+
+mQINBF/OM8EBEADbtIT8en8PLczP2egPDeBXIXaSsQFzGgCBGd1vjCLbe1bhZ3ii
+O/FWr2QqORnbzrNim5VyzeZ8Qq4Yj0XoQNhvkw9eD2old1mThjra5BMesMNXHnEB
+PG6LAfPFDE9hsUaQDIJrHRO09GKlMJDIFX/cSPkzlQw2Pnzf6UTY8E2L6CORPWih
+...
+ZZYZdDCRzHPA90AVFdev65Yd+2xt+JjmnbldS6z7HaIiCeT5XhhhgSd9AUoM+Hyu
+NkP7g8coWb57JQj63AgO9ukfqYuR4XqQHW3ga6U4cKhPUU1ChE5H
+=swfs
+-----END PGP PUBLIC KEY BLOCK-----
+```
+
+Run `sudo apt update` and make sure the legacy keyring warning has disappeared.
+
+### Manual installation
 
 However, you can install the latest package from the release page:
 
  1. Get the latest `.deb` from [release page](https://github.com/digabi/usb-monster/releases)
- 1. Install: `sudo apt install ./digabi-usb-monster_X.X.X_all.deb`
+ 1. Install: `sudo dpkg -i ./digabi-usb-monster_X.X.X_all.deb`
 
 ## Using USB-monster
 
